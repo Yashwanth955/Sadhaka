@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+// NEW: Import the Isar service and TestResult model
+import 'hive_service.dart';
+import 'test_result.dart';
+
 class StreaksScreen extends StatefulWidget {
   const StreaksScreen({super.key});
 
@@ -9,38 +13,40 @@ class StreaksScreen extends StatefulWidget {
 }
 
 class _StreaksScreenState extends State<StreaksScreen> {
-  // --- State Variables ---
+  // --- UPDATED: State Variables ---
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  late final Map<DateTime, List<String>> _events;
+
+  // NEW: A Future to hold the events loaded from the database
+  late final Future<Map<DateTime, List<String>>> _eventsFuture;
+  final hiveService = HiveService();
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-
-    // Sample data for tests taken on specific days.
-    // In a real app, you would fetch this from a database.
-    _events = {
-      DateTime.utc(2025, 9, 18): ['Push-up Test', '1.6km Run Test'],
-      DateTime.utc(2025, 9, 20): ['Standing Broad Jump'],
-      DateTime.utc(2025, 9, 21): ['Sit and Reach Test'],
-      DateTime.utc(2025, 9, 22): ['4*10mts Shuttle Run', 'Push-up Test'],
-      DateTime.utc(2025, 9, 23): ['1.6km Run Test'], // Today
-    };
+    // NEW: Load the events from Isar when the screen is first initialized
+    _eventsFuture = _loadEventsFromDb();
   }
 
-  // A helper function to get the tests for a specific day.
-  List<String> _getEventsForDay(DateTime day) {
-    // Important: Use `isSameDay` from the package to ignore time differences.
-    return _events[DateTime.utc(day.year, day.month, day.day)] ?? [];
+  // NEW: Method to fetch results from Isar and format them for the calendar
+  Future<Map<DateTime, List<String>>> _loadEventsFromDb() async {
+    final allResults = await hiveService.getAllTestResults();
+    final Map<DateTime, List<String>> events = {};
+
+    for (final result in allResults) {
+      // Use UTC to ignore time zones and only compare the date part
+      final date = DateTime.utc(result.date.year, result.date.month, result.date.day);
+      if (events[date] == null) {
+        events[date] = [];
+      }
+      events[date]!.add(result.testTitle);
+    }
+    return events;
   }
 
   @override
   Widget build(BuildContext context) {
-    const primaryGreen = Color(0xFF20D36A);
-    final selectedDayEvents = _getEventsForDay(_selectedDay!);
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -53,80 +59,81 @@ class _StreaksScreenState extends State<StreaksScreen> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          // A simple card to show the current streak
-          _buildStreakCounter(),
+      // NEW: Wrap the body in a FutureBuilder
+      body: FutureBuilder<Map<DateTime, List<String>>>(
+        future: _eventsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          // The Calendar Widget
-          TableCalendar(
-            firstDay: DateTime.utc(2024, 1, 1),
-            lastDay: DateTime.utc(2026, 12, 31),
-            focusedDay: _focusedDay,
-            calendarFormat: CalendarFormat.month,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            eventLoader: _getEventsForDay, // Marks the days with tests
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay; // update `_focusedDay` here as well
-              });
-            },
-            // --- UI Customization for the calendar ---
-            calendarStyle: CalendarStyle(
-              // Style for the markers (dots) indicating a test was taken
-              markerDecoration: const BoxDecoration(
-                color: primaryGreen,
-                shape: BoxShape.circle,
-              ),
-              // Style for the selected day
-              selectedDecoration: BoxDecoration(
-                color: primaryGreen.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              // Style for today's date
-              todayDecoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                shape: BoxShape.circle,
-              ),
-            ),
-            headerStyle: const HeaderStyle(
-              titleCentered: true,
-              formatButtonVisible: false,
-            ),
-          ),
-          const SizedBox(height: 16.0),
+          if (snapshot.hasError) {
+            return const Center(child: Text('Error loading data.'));
+          }
 
-          // --- The list of tests taken on the selected day ---
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Tests on ${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+          final events = snapshot.data ?? {};
+
+          List<String> getEventsForDay(DateTime day) {
+            return events[DateTime.utc(day.year, day.month, day.day)] ?? [];
+          }
+
+          final selectedDayEvents = getEventsForDay(_selectedDay!);
+
+          // The main UI is built here once the data is ready
+          return Column(
+            children: [
+              _buildStreakCounter(),
+              TableCalendar(
+                firstDay: DateTime.utc(2024, 1, 1),
+                lastDay: DateTime.utc(2026, 12, 31),
+                focusedDay: _focusedDay,
+                calendarFormat: CalendarFormat.month,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                eventLoader: getEventsForDay,
+                onDaySelected: (selectedDay, focusedDay) {
+                  setState(() {
+                    _selectedDay = selectedDay;
+                    _focusedDay = focusedDay;
+                  });
+                },
+                calendarStyle: _buildCalendarStyle(),
+                headerStyle: const HeaderStyle(
+                  titleCentered: true,
+                  formatButtonVisible: false,
                 ),
-                const Divider(height: 24),
-                Expanded(
-                  child: selectedDayEvents.isEmpty
-                      ? const Center(child: Text('No tests were taken on this day.'))
-                      : ListView.builder(
-                    itemCount: selectedDayEvents.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: const Icon(Icons.assignment_turned_in, color: primaryGreen),
-                        title: Text(selectedDayEvents[index]),
-                      );
-                    },
-                  ),
+              ),
+              const SizedBox(height: 16.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'Tests on ${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const Divider(height: 24),
+                    Expanded(
+                      child: selectedDayEvents.isEmpty
+                          ? const Center(child: Text('No tests were taken on this day.'))
+                          : ListView.builder(
+                        itemCount: selectedDayEvents.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            leading: const Icon(Icons.assignment_turned_in, color: Color(0xFF20D36A)),
+                            title: Text(selectedDayEvents[index]),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -145,10 +152,28 @@ class _StreaksScreenState extends State<StreaksScreen> {
           Icon(Icons.local_fire_department, color: Colors.orange),
           SizedBox(width: 8),
           Text(
-            'Current Streak: 3 Days!',
+            'Current Streak: 3 Days!', // This can also be calculated from the data later
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ],
+      ),
+    );
+  }
+
+  CalendarStyle _buildCalendarStyle() {
+    const primaryGreen = Color(0xFF20D36A);
+    return CalendarStyle(
+      markerDecoration: const BoxDecoration(
+        color: primaryGreen,
+        shape: BoxShape.circle,
+      ),
+      selectedDecoration: BoxDecoration(
+        color: primaryGreen.withOpacity(0.5),
+        shape: BoxShape.circle,
+      ),
+      todayDecoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        shape: BoxShape.circle,
       ),
     );
   }

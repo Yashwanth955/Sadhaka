@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+// NEW: Import the Hive service and model
+import 'hive_service.dart';
+import 'badge_model.dart' as model; // Added prefix
+
 // Import main screens for the bottom navigation bar
 import 'home_screen.dart';
 import 'tests_screen.dart';
@@ -11,19 +15,8 @@ class BadgesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dummy data for badges
-    final earnedBadges = [
-      {'name': 'Core Strength Pro 💪', 'desc': 'Completed 5 core strength tests', 'img': 'https://i.imgur.com/bT6R022.png'},
-      {'name': 'Stamina Star 🔥', 'desc': 'Achieved top 10% in stamina tests', 'img': 'https://i.imgur.com/k2p8J5F.png'},
-      {'name': 'Flexibility Master 🤸', 'desc': 'Demonstrated exceptional flexibility', 'img': 'https://i.imgur.com/8m52eSO.png'},
-      {'name': 'Balance Ace 🧘', 'desc': 'Maintained perfect balance in all tests', 'img': 'https://i.imgur.com/bT6R022.png'},
-    ];
-    final unearnedBadges = [
-      {'name': 'Speed Demon 🏃', 'desc': 'Achieve top speed in sprint tests', 'img': 'https://i.imgur.com/bT6R022.png'},
-      {'name': 'Endurance Champ 🏆', 'desc': 'Complete all endurance challenges', 'img': 'https://i.imgur.com/k2p8J5F.png'},
-      {'name': 'Powerhouse 💪', 'desc': 'Demonstrate exceptional power', 'img': 'https://i.imgur.com/8m52eSO.png'},
-      {'name': 'Agility Expert 🤸', 'desc': 'Master all agility drills', 'img': 'https://i.imgur.com/bT6R022.png'},
-    ];
+    // NEW: Create an instance of the HiveService
+    final hiveService = HiveService();
 
     return Scaffold(
       appBar: AppBar(
@@ -42,10 +35,42 @@ class BadgesScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionTitle('Earned'),
-            _buildBadgesGrid(earnedBadges),
+            // UPDATED: FutureBuilder to fetch earned badges from Hive
+            FutureBuilder<List<model.Badge>>(
+              future: hiveService.getEarnedBadges(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No earned badges yet. Keep testing!'),
+                  ));
+                }
+                final badges = snapshot.data!;
+                return _buildBadgesGrid(badges, isEarned: true);
+              },
+            ),
             const SizedBox(height: 24),
             _buildSectionTitle('Unearned'),
-            _buildBadgesGrid(unearnedBadges, isEarned: false),
+            // UPDATED: FutureBuilder to fetch unearned badges from Hive
+            FutureBuilder<List<model.Badge>>(
+              future: hiveService.getUnearnedBadges(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('Congratulations, you have earned all badges!'),
+                  ));
+                }
+                final badges = snapshot.data!;
+                return _buildBadgesGrid(badges, isEarned: false);
+              },
+            ),
           ],
         ),
       ),
@@ -60,7 +85,8 @@ class BadgesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBadgesGrid(List<Map<String, String>> badges, {bool isEarned = true}) {
+  // UPDATED: This widget now takes a List<model.Badge> instead of a List<Map>
+  Widget _buildBadgesGrid(List<model.Badge> badges, {bool isEarned = true}) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -74,10 +100,10 @@ class BadgesScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final badge = badges[index];
         return _buildBadgeItem(
-          name: badge['name']!,
-          description: badge['desc']!,
-          imageUrl: badge['img']!,
-          isEarned: isEarned,
+          name: badge.name,
+          description: badge.description,
+          imageUrl: badge.imageUrl,
+          isEarned: isEarned, // This uses the isEarned from the badge itself if it's an earned list, or the parameter
         );
       },
     );
@@ -104,6 +130,7 @@ class BadgesScreen extends StatelessWidget {
     );
   }
 }
+
 // A common bottom navigation bar for all secondary screens
 BottomNavigationBar _buildBottomNavBar(BuildContext context, int currentIndex) {
   void handleNavBarTap(int index) {

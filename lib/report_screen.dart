@@ -2,11 +2,13 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'report_models.dart';
 
-// NEW: Add imports for the main screens for navigation
+// Imports for navigation and database services
 import 'home_screen.dart';
 import 'tests_screen.dart';
 import 'progress_screen.dart';
 import 'profile_screen.dart';
+import 'hive_service.dart';
+import 'test_result.dart';
 
 const primaryGreen = Color(0xFF20D36A);
 const lightGreyButton = Color(0xFFF0F0F0);
@@ -58,28 +60,26 @@ class ReportScreen extends StatelessWidget {
               chartData: reportData.progressChartData,
             ),
             const SizedBox(height: 32),
-            _buildActionButtons(context), // Pass context for navigation
+            _buildActionButtons(context),
           ],
         ),
       ),
-      // NEW: Added the BottomNavigationBar
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1, // Tests Tab
         selectedItemColor: primaryGreen,
         unselectedItemColor: Colors.grey.shade600,
         onTap: (index) {
-          // This logic provides a clean navigation stack reset
           switch (index) {
-            case 0: // Home
+            case 0:
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
               break;
-            case 1: // Tests
+            case 1:
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const TestsScreen()), (route) => false);
               break;
-            case 2: // Progress
+            case 2:
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProgressScreen()), (route) => false);
               break;
-            case 3: // Profile
+            case 3:
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfileScreen()), (route) => false);
               break;
           }
@@ -229,12 +229,33 @@ class ReportScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(child: ElevatedButton(onPressed: (){
-              // Pressing retake should pop the report screen and go back to the test list.
-              // A more advanced version could go back to the camera.
               Navigator.of(context).pop();
             }, style: ElevatedButton.styleFrom(backgroundColor: primaryGreen, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)), child: const Text('Retake Test'))),
             const SizedBox(width: 12),
-            Expanded(child: OutlinedButton(onPressed: (){}, style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)), child: const Text('Save Result'))),
+            Expanded(
+              child: OutlinedButton(
+                // UPDATED: This button now saves the result to the Hive database
+                onPressed: () {
+                  final newResult = TestResult()
+                    ..testTitle = reportData.testTitle
+                    ..resultValue = reportData.progressValue
+                    ..date = DateTime.now();
+
+                  // Save it to the database using the service
+                  HiveService().saveTestResult(newResult);
+
+                  // Show a confirmation message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        backgroundColor: Colors.green,
+                        content: Text('Result saved successfully!')
+                    ),
+                  );
+                },
+                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                child: const Text('Save Result'),
+              ),
+            ),
           ],
         ),
         Row(

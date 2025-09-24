@@ -6,7 +6,11 @@
 <string>This app needs camera access to record and analyze fitness tests.</string>
 <key>NSMicrophoneUsageDescription</key>
 <string>This app needs microphone access to record audio with your test videos.</string>
-	<key>CFBundleDevelopmentRegion</key>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to your photo library to select a profile picture.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>This app needs access to your camera to take a profile picture.</string>
+    <key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Sadhak</string>

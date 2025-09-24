@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "612030687073",
+    "project_id": "sadhak-25",
+    "storage_bucket": "sadhak-25.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:612030687073:android:49556bc409a50f1c38c720",
+        "android_client_info": {
+          "package_name": "com.example.sadhak"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzQVq0hg_cP1aNNojZi051lRkK_Gl5Wpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

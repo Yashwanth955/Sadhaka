@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+// NEW: Import the Hive service and model
+import 'hive_service.dart'; // Ensure this line is present and correct
+import 'leaderboard_model.dart';
+
 // Import main screens for the bottom navigation bar
 import 'home_screen.dart';
 import 'tests_screen.dart';
@@ -14,13 +18,12 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  // State for the tabs
+  // NEW: Create an instance of the HiveService
+  final hiveService = HiveService(); // Changed from IsarService
   int _selectedTabIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    const primaryGreen = Color(0xFF20D36A);
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -35,7 +38,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       ),
       body: Column(
         children: [
-          // Filter Buttons
+          // Filter Buttons (UI only for now)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
@@ -57,30 +60,39 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ],
             ),
           ),
-          // User List
+          // UPDATED: User List now uses a FutureBuilder to get data from Hive
           Expanded(
-            child: ListView.builder(
-              itemCount: 10, // Displaying top 10 users
-              itemBuilder: (context, index) {
-                // Dummy data
-                final users = [
-                  'Arjun Sharma', 'Priya Patel', 'Rohan Verma', 'Anika Singh',
-                  'Vikram Kapoor', 'Neha Gupta', 'Aditya Mishra', 'Shreya Rao',
-                  'Ishaan Kumar', 'Divya Sharma'
-                ];
-                final scores = [95, 92, 90, 88, 85, 82, 80, 78, 75, 72];
-                return _buildUserTile(
-                  rank: index + 1,
-                  name: users[index],
-                  score: scores[index],
-                  imageUrl: 'https://i.pravatar.cc/150?img=${index + 1}',
+            child: FutureBuilder<List<LeaderboardEntry>>(
+              future: hiveService.getLeaderboard(), // Changed from isarService
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('Leaderboard is empty.'));
+                }
+
+                final leaderboard = snapshot.data!;
+
+                return ListView.builder(
+                  itemCount: leaderboard.length,
+                  itemBuilder: (context, index) {
+                    final entry = leaderboard[index];
+                    return _buildUserTile(
+                      rank: entry.rank,
+                      name: entry.name,
+                      score: entry.score,
+                      imageUrl: entry.imageUrl,
+                      region: entry.region,
+                    );
+                  },
                 );
               },
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(context, 1), // Assuming this is part of the 'Tests' flow
+      bottomNavigationBar: _buildBottomNavBar(context, 1),
     );
   }
 
@@ -134,7 +146,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
-  Widget _buildUserTile({required int rank, required String name, required int score, required String imageUrl}) {
+  Widget _buildUserTile({required int rank, required String name, required int score, required String imageUrl, required String region}) {
     return ListTile(
       leading: Row(
         mainAxisSize: MainAxisSize.min,
@@ -146,10 +158,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       ),
       title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('Score: $score'),
-      trailing: const Text('India'),
+      trailing: Text(region),
     );
   }
 }
+
 // A common bottom navigation bar for all secondary screens
 BottomNavigationBar _buildBottomNavBar(BuildContext context, int currentIndex) {
   void handleNavBarTap(int index) {
