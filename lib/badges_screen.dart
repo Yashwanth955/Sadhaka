@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // NEW: Import the Hive service and model
-import 'hive_service.dart';
+import 'isar_service.dart'; // Changed from isar_service.dart
 import 'badge_model.dart' as model; // Added prefix
 
 // Import main screens for the bottom navigation bar
@@ -16,7 +16,7 @@ class BadgesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // NEW: Create an instance of the HiveService
-    final hiveService = HiveService();
+    final isarService = IsarService();
 
     return Scaffold(
       appBar: AppBar(
@@ -37,7 +37,7 @@ class BadgesScreen extends StatelessWidget {
             _buildSectionTitle('Earned'),
             // UPDATED: FutureBuilder to fetch earned badges from Hive
             FutureBuilder<List<model.Badge>>(
-              future: hiveService.getEarnedBadges(),
+              future: isarService.getEarnedBadges(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -56,7 +56,7 @@ class BadgesScreen extends StatelessWidget {
             _buildSectionTitle('Unearned'),
             // UPDATED: FutureBuilder to fetch unearned badges from Hive
             FutureBuilder<List<model.Badge>>(
-              future: hiveService.getUnearnedBadges(),
+              future: isarService.getUnearnedBadges(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

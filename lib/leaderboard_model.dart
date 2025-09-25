@@ -1,25 +1,26 @@
 // lib/leaderboard_model.dart
-import 'package:hive/hive.dart';
+import 'package:isar/isar.dart'; // Changed from Hive to Isar
 
-part 'leaderboard_model.g.dart'; // This might need to be updated for Hive's generated files
+part 'leaderboard_model.g.dart'; // Keep this for Isar code generation
 
-@HiveType(typeId: 3) // Ensure typeId is unique
+@collection // Changed from @HiveType
 class LeaderboardEntry {
-  @HiveField(0)
-  late int id;
+  Id id = Isar.autoIncrement; // Changed from 'late int id;' and HiveField(0)
 
-  @HiveField(1)
+  // @HiveField(1) // Removed HiveField annotation
   late int rank;
 
-  @HiveField(2)
+  // @HiveField(2) // Removed HiveField annotation
   late String name;
 
-  @HiveField(3)
+  // @HiveField(3) // Removed HiveField annotation
   late int score;
 
-  @HiveField(4)
+  // @HiveField(4) // Removed HiveField annotation
   late String imageUrl;
 
-  @HiveField(5)
+  // @HiveField(5) // Removed HiveField annotation
   late String region;
+
+  // Constructor can be added if needed
 }

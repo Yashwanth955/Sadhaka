@@ -12,9 +12,8 @@ import 'leaderboard_screen.dart';
 import 'badges_screen.dart';
 import 'resources_screen.dart';
 
-// NEW: Import the Hive service and TestResult model
-import 'hive_service.dart';
-import 'test_result.dart';
+// NEW: Import the Isar service
+import 'isar_service.dart'; // Changed from hive_service.dart
 
 
 // A simple model for our daily challenges
@@ -32,11 +31,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   late DailyChallenge _selectedChallenge;
   String _selectedTimeFrame = 'Daily';
   List<FlSpot> _chartData = [];
-  final hiveService = HiveService(); // NEW: Instance of HiveService
+  final isarService = IsarService(); // Changed from HiveService
 
   @override
   void initState() {
@@ -53,9 +52,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedChallenge = challenges[Random().nextInt(challenges.length)];
   }
 
-  // --- UPDATED: This method now fetches and processes real data from Hive ---
+  // --- UPDATED: This method now fetches and processes real data from Isar ---
   Future<void> _updateChartData() async {
-    final allResults = await hiveService.getAllTestResults();
+    // Assuming IsarService has a similar method to get all test results.
+    // You might need to adjust this based on your IsarService implementation.
+    final allResults = await isarService.getAllTestResults(); 
     final now = DateTime.now();
     Map<int, double> bestScores = {};
 
@@ -71,12 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_selectedTimeFrame == 'Daily') {
       final sevenDaysAgo = now.subtract(const Duration(days: 6));
+      // Ensure your TestResult model (if that's what allResults contains) has a 'date' field.
       final recentResults = allResults.where((r) => r.date.isAfter(sevenDaysAgo) && r.date.isBefore(now.add(const Duration(days: 1)))).toList();
 
       for (var result in recentResults) {
         int dayIndex = 6 - now.difference(result.date).inDays;
         if (dayIndex >= 0 && dayIndex < 7) {
-          double score = parseScore(result.resultValue);
+          // Ensure your TestResult model has a 'resultValue' field.
+          double score = parseScore(result.resultValue); 
           if (score > (bestScores[dayIndex] ?? 0.0)) {
             bestScores[dayIndex] = score;
           }
@@ -194,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
           image: DecorationImage(
             image: NetworkImage('https://images.unsplash.com/photo-1519861531473-9200262188bf?q=80&w=2071'),
             fit: BoxFit.cover,
-            opacity: 0.2,
+            opacity: 0.2, // This opacity on DecorationImage is fine
           ),
         ),
         child: Row(
@@ -286,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
-                      colors: [primaryGreen.withOpacity(0.3), primaryGreen.withOpacity(0.0)],
+                      colors: [primaryGreen.withAlpha((255 * 0.3).round()), primaryGreen.withAlpha((255 * 0.0).round())],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -375,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: const BoxDecoration(image: DecorationImage(image: NetworkImage('https://images.unsplash.com/photo-1548933122-5fed123a7e53?q=80&w=2070'), fit: BoxFit.cover)),
         child: Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.black.withOpacity(0.4)),
+          decoration: BoxDecoration(color: Colors.black.withAlpha((255 * 0.4).round())),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -401,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: const BoxDecoration(image: DecorationImage(image: NetworkImage('https://images.unsplash.com/photo-1612871689353-cccf581d8ec4?q=80&w=2070'), fit: BoxFit.cover)),
         child: Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.black.withOpacity(0.4)),
+          decoration: BoxDecoration(color: Colors.black.withAlpha((255 * 0.4).round())),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [

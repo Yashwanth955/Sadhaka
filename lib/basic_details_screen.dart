@@ -3,12 +3,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'hive_service.dart';
-import 'user_model.dart';
+import 'isar_service.dart'; // Changed from hive_service.dart
+import 'user_model.dart' as user_model;
 import 'home_screen.dart'; // To navigate to home after saving
 
 class BasicDetailsScreen extends StatefulWidget {
-  // We remove the firebaseUser dependency for a pure offline app
   const BasicDetailsScreen({super.key});
 
   @override
@@ -16,7 +15,6 @@ class BasicDetailsScreen extends StatefulWidget {
 }
 
 class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
-  // Text editing controllers for all fields
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   final _sportController = TextEditingController();
@@ -24,9 +22,8 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
   final _weightController = TextEditingController();
   final _mobileController = TextEditingController();
 
-  final _hiveService = HiveService();
+  final _isarService = IsarService(); // Changed from HiveService
 
-  // State variable to hold the selected image file
   XFile? _profileImage;
 
   @override
@@ -40,7 +37,6 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
     super.dispose();
   }
 
-  // Method to open the image gallery
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -52,19 +48,18 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
   }
 
   void _saveDetails() async {
-    final newUserProfile = UserProfile()
+    final newUserProfile = user_model.UserProfile()
       ..name = _nameController.text
       ..age = int.tryParse(_ageController.text)
       ..sport = _sportController.text
       ..height = double.tryParse(_heightController.text)
       ..weight = double.tryParse(_weightController.text)
       ..mobileNumber = _mobileController.text
-      ..profilePhotoPath = _profileImage?.path; // Save the image path
+      ..profilePhotoPath = _profileImage?.path;
 
-    await _hiveService.saveUserProfile(newUserProfile);
+    await _isarService.saveUserProfile(newUserProfile); // Changed from _hiveService
 
     if (mounted) {
-      // After saving, navigate to the main app (HomeScreen)
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -95,7 +90,6 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- Profile Picture Section ---
             Center(
               child: Stack(
                 children: [
@@ -125,8 +119,6 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
               ),
             ),
             const SizedBox(height: 32),
-
-            // --- Input Fields ---
             TextField(controller: _nameController, decoration: InputDecoration(labelText: 'Full Name', border: textFieldBorder)),
             const SizedBox(height: 20),
             TextField(controller: _ageController, decoration: InputDecoration(labelText: 'Age', border: textFieldBorder), keyboardType: TextInputType.number),
@@ -143,8 +135,6 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
             const SizedBox(height: 20),
             TextField(controller: _mobileController, decoration: InputDecoration(labelText: 'Mobile Number', border: textFieldBorder), keyboardType: TextInputType.phone),
             const SizedBox(height: 40),
-
-            // --- Save Button ---
             ElevatedButton(
               onPressed: _saveDetails,
               style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),

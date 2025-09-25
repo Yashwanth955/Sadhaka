@@ -1,36 +1,29 @@
 // lib/user_model.dart
 
-import 'package:hive/hive.dart';
+import 'package:isar/isar.dart';
 
-part 'user_model.g.dart';
+part 'user_model.g.dart'; // Required for the Isar generator
 
-@HiveType(typeId: 1) // Each model needs a unique typeId
-class UserProfile extends HiveObject {
-  @HiveField(0)
-  String? firebaseUid; // Kept for future online integration
+@collection
+class UserProfile {
+  // Isar's unique, auto-incrementing ID
+  Id id = Isar.autoIncrement;
 
-  @HiveField(1)
+  // This links the local profile to the Firebase Authentication user
+  @Index(unique: true)
+  String? firebaseUid;
+
   String? name;
-
-  @HiveField(2)
   String? email;
-
-  @HiveField(3)
   int? age;
-
-  @HiveField(4)
   String? sport;
-
-  // --- NEW FIELDS ---
-  @HiveField(5)
   String? profilePhotoPath;
-
-  @HiveField(6)
   double? height; // in cm
-
-  @HiveField(7)
   double? weight; // in kg
-
-  @HiveField(8)
   String? mobileNumber;
+
+  // --- Coach Fields ---
+  String? coachName;
+  String? coachPhoneNumber;
+  String? coachWhatsappNumber;
 }

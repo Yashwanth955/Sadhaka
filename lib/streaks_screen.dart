@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 // NEW: Import the Isar service and TestResult model
-import 'hive_service.dart';
-import 'test_result.dart';
+import 'isar_service.dart';
 
 class StreaksScreen extends StatefulWidget {
   const StreaksScreen({super.key});
@@ -19,7 +18,7 @@ class _StreaksScreenState extends State<StreaksScreen> {
 
   // NEW: A Future to hold the events loaded from the database
   late final Future<Map<DateTime, List<String>>> _eventsFuture;
-  final hiveService = HiveService();
+  final isarService = IsarService(); // Changed from HiveService
 
   @override
   void initState() {
@@ -31,7 +30,7 @@ class _StreaksScreenState extends State<StreaksScreen> {
 
   // NEW: Method to fetch results from Isar and format them for the calendar
   Future<Map<DateTime, List<String>>> _loadEventsFromDb() async {
-    final allResults = await hiveService.getAllTestResults();
+    final allResults = await isarService.getAllTestResults(); // Changed from hiveService
     final Map<DateTime, List<String>> events = {};
 
     for (final result in allResults) {

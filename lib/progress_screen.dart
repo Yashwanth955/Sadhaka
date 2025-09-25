@@ -5,7 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'home_screen.dart';
 import 'tests_screen.dart';
 import 'profile_screen.dart';
-import 'hive_service.dart';
+import 'isar_service.dart';
 import 'test_result.dart';
 
 class ProgressScreen extends StatefulWidget {
@@ -81,7 +81,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
-                ? [BoxShadow(color: Colors.black.withAlpha((255 * 0.1).round()), blurRadius: 5)]
+                ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5)]
                 : [],
           ),
           child: Text(
@@ -106,14 +106,13 @@ class ProgressTabView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const primaryGreen = Color(0xFF20D36A);
-    final hiveService = HiveService(); // Changed from isarService
+    final isarService = IsarService();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Overall Progress
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -126,29 +125,23 @@ class ProgressTabView extends StatelessWidget {
                 const Text('Overall Progress', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 LinearProgressIndicator(
-                  value: 0.7, // Example value
+                  value: 0.7,
                   backgroundColor: Colors.grey.shade300,
                   color: primaryGreen,
                   minHeight: 8,
                   borderRadius: BorderRadius.circular(5),
                 ),
                 const SizedBox(height: 8),
-                const Text('Level 3', style: TextStyle(color: Colors.grey)), // Example value
+                const Text('Level 3', style: TextStyle(color: Colors.grey)),
               ],
             ),
           ),
           const SizedBox(height: 24),
 
-          // Daily Challenge
-          const Text('Daily Challenge', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network('https://i.imgur.com/G06sW7s.jpeg', fit: BoxFit.cover),
-          ),
+          // --- Recommended Sports Section ---
+          _buildRecommendedSportsSection(),
           const SizedBox(height: 24),
 
-          // Achievements
           const Text('Achievements', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           SizedBox(
@@ -164,11 +157,10 @@ class ProgressTabView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Recent Tests section
           const Text('Recent Tests', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           FutureBuilder<List<TestResult>>(
-            future: hiveService.getAllTestResults(), // Changed from isarService
+            future: isarService.getAllTestResults(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -197,6 +189,77 @@ class ProgressTabView extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRecommendedSportsSection() {
+    // Dummy data for recommended sports
+    final sports = [
+      {'name': 'Swimming', 'reason': 'Excellent Endurance', 'image': 'https://images.unsplash.com/photo-1569911483321-3443a3e0f49a?q=80&w=2070'},
+      {'name': 'Weightlifting', 'reason': 'Great Strength', 'image': 'https://images.unsplash.com/photo-1581009137042-c552b485697a?q=80&w=2070'},
+      {'name': 'Sprinting', 'reason': 'Top-tier Speed', 'image': 'https://images.unsplash.com/photo-1508924329642-33d3d37a1a45?q=80&w=2070'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Recommended Sports', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const Text('Based on your excellent fitness results', style: TextStyle(color: Colors.grey)),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: sports.length,
+            itemBuilder: (context, index) {
+              return _buildSportCard(
+                name: sports[index]['name']!,
+                reason: sports[index]['reason']!,
+                imageUrl: sports[index]['image']!,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSportCard({required String name, required String reason, required String imageUrl}) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(right: 16),
+      child: Container(
+        width: 180,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(name, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(reason, style: TextStyle(color: Colors.white.withOpacity(0.8))),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {},
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('View Details'),
+              )
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -246,20 +309,17 @@ class ProgressTabView extends StatelessWidget {
   }
 }
 
-// The ReportsTabView remains unchanged
 class ReportsTabView extends StatelessWidget {
   const ReportsTabView({super.key});
 
   @override
   Widget build(BuildContext context) {
     const primaryGreen = Color(0xFF20D36A);
-    // Dummy report data...
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Stat cards
           Row(
             children: [
               Expanded(child: _buildStatCard('Best Score', '95')),
@@ -270,30 +330,22 @@ class ReportsTabView extends StatelessWidget {
           const SizedBox(height: 16),
           _buildStatCard('Avg. Improvement', '+15%', isFullWidth: true),
           const SizedBox(height: 24),
-
-          // Performance over time chart
           const Text('Performance Over Time', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Text('+10%', style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           SizedBox(height: 150, child: LineChart(mainData())),
           const SizedBox(height: 24),
-
-          // Last 3 attempts comparison
           const Text('Last 3 Attempts Comparison', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Text('+5%', style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           SizedBox(height: 150, child: BarChart(barData())),
           const SizedBox(height: 24),
-
-          // Detailed Report Card
           const Text('Detailed Report Card', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           _buildReportCardItem(Icons.run_circle_outlined, 'Speed: 9.5/10', 'Excellent', Colors.green),
           _buildReportCardItem(Icons.timer_outlined, 'Endurance: 7.2/10', 'Needs Improvement', Colors.orange),
           _buildReportCardItem(Icons.star_outline, 'Flexibility: 5.8/10', 'Critical', Colors.red),
           const SizedBox(height: 24),
-
-          // Buttons
           Row(
             children: [
               Expanded(child: OutlinedButton(onPressed: () {}, child: const Text('Download Report'))),
@@ -344,8 +396,6 @@ class ReportsTabView extends StatelessWidget {
     );
   }
 
-  // --- DUMMY CHART DATA ---
-
   LineChartData mainData() {
     return LineChartData(
       gridData: const FlGridData(show: false),
@@ -366,7 +416,7 @@ class ReportsTabView extends StatelessWidget {
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
-              colors: [const Color(0xFF20D36A).withAlpha((255 * 0.3).round()), const Color(0xFF20D36A).withAlpha(0)],
+              colors: [const Color(0xFF20D36A).withOpacity(0.3), const Color(0xFF20D36A).withOpacity(0.0)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -413,7 +463,7 @@ BottomNavigationBar _buildBottomNavBar(BuildContext context) {
   }
 
   return BottomNavigationBar(
-    currentIndex: 2, // Progress screen is index 2
+    currentIndex: 2,
     onTap: handleNavBarTap,
     selectedItemColor: primaryGreen,
     unselectedItemColor: Colors.grey.shade600,

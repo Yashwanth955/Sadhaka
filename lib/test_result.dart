@@ -1,22 +1,18 @@
 // lib/test_result.dart
 
-import 'package:hive/hive.dart';
+import 'package:isar/isar.dart'; // Should be Isar import
 
-// This line is needed to generate the file that Hive needs
-part 'test_result.g.dart';
+part 'test_result.g.dart'; // For Isar code generation
 
-@HiveType(typeId: 2) // Each model needs a unique typeId
+@collection // Should be @collection for Isar
 class TestResult {
-  @HiveField(0) // Each field needs a unique, sequential index
-  late String testTitle;
+  Id id = Isar.autoIncrement; // Isar Id
 
-  @HiveField(1)
-  late String resultValue;
+  late String testTitle; // No HiveField annotation
 
-  @HiveField(2)
+  late String resultValue; // No HiveField annotation
 
-  late DateTime date;
+  late DateTime date; // No HiveField annotation
 
-  @HiveField(3)
-  String? videoPath;
+  String? videoPath; // No HiveField annotation
 }

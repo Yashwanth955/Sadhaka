@@ -1,30 +1,29 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-// Import all the main screen files for navigation
+// Import all necessary files
 import 'home_screen.dart';
 import 'tests_screen.dart';
 import 'progress_screen.dart';
 import 'profile_screen.dart';
 import 'camera_screen.dart';
-// Import the video preview screen
+import 'pose_analyzer.dart'; // Crucial for the Retake logic
 import 'video_preview_screen.dart';
-// Import the report screen and its data
 import 'report_screen.dart';
 import 'report_models.dart';
-import 'report_data.dart'; // Your dummy data
+import 'report_data.dart';
 
 // --- Global constants for consistent styling ---
 const primaryGreen = Color(0xFF20D36A);
 const lightGreyButton = Color(0xFFF0F0F0);
 
-// --- 1. Result Screen for RUNNING tests (800m, 1.6km) ---
+// --- 1. Result Screen for RUNNING tests (Now a general placeholder) ---
 class RunResultScreen extends StatelessWidget {
   final String testTitle;
   final String feedback;
-  final String imageUrl; // Image placeholder
+  final String imageUrl;
   final bool hasReviewButton;
-  final XFile? recordedVideo;
+  final XFile? recordedVideo; // This will usually be null with live analysis
 
   const RunResultScreen({
     super.key,
@@ -35,7 +34,6 @@ class RunResultScreen extends StatelessWidget {
     this.recordedVideo,
   });
 
-  // UPDATED: This method now navigates to the ReportScreen
   void _showConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -54,18 +52,15 @@ class RunResultScreen extends StatelessWidget {
               child: const Text('Submit'),
               onPressed: () {
                 print('Video submitted! Navigating to report.');
-                Navigator.of(context).pop(); // Dismiss the dialog
+                Navigator.of(context).pop();
 
-                // Logic to select the correct report data based on the test title
                 TestReport reportToShow;
                 if (testTitle.contains('1.6km')) {
                   reportToShow = runReportData;
                 } else {
-                  // Fallback to a default report if needed
                   reportToShow = pushupReportData;
                 }
 
-                // Navigate to the new ReportScreen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -82,6 +77,9 @@ class RunResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // UPDATED: Review button is only enabled if a video file actually exists
+    final bool canReview = hasReviewButton && recordedVideo != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context, testTitle),
@@ -105,33 +103,34 @@ class RunResultScreen extends StatelessWidget {
             const Spacer(),
             Column(
               children: [
-                if (hasReviewButton && recordedVideo != null)
+                if (hasReviewButton)
                   _buildStyledButton(
                     text: 'Review Video',
-                    onPressed: () {
+                    // Button is disabled if there's no video
+                    onPressed: canReview
+                        ? () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => VideoPreviewScreen(videoFile: recordedVideo!),
                         ),
                       );
-                    },
+                    }
+                        : null,
                     isFilled: false,
                   ),
                 if (hasReviewButton) const SizedBox(height: 12),
                 _buildStyledButton(
                   text: 'Retake',
                   onPressed: () {
+                    // CORRECTED: This now correctly selects an analyzer for the retake
+                    final analyzer = _getAnalyzerForTest(testTitle);
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
                         builder: (context) => CameraScreen(
-                          resultScreen: RunResultScreen(
-                            testTitle: testTitle,
-                            feedback: feedback,
-                            imageUrl: imageUrl,
-                            hasReviewButton: hasReviewButton,
-                          ),
+                          analyzer: analyzer,
+                          testName: testTitle,
                         ),
                       ),
                     );
@@ -178,7 +177,7 @@ class RunResultScreen extends StatelessWidget {
   }
 }
 
-// --- 2. Result Screen for JUMPING tests (Broad Jump, etc.) ---
+// --- 2. Result Screen for JUMPING/REP tests ---
 class JumpResultScreen extends StatelessWidget {
   final String testTitle;
   final String feedback;
@@ -191,7 +190,6 @@ class JumpResultScreen extends StatelessWidget {
     this.recordedVideo,
   });
 
-  // UPDATED: This method now navigates to the ReportScreen
   void _showConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -212,13 +210,11 @@ class JumpResultScreen extends StatelessWidget {
                 print('Video submitted! Navigating to report.');
                 Navigator.of(context).pop();
 
-                // Logic to select the correct report data based on the test title
                 TestReport reportToShow;
-                if (testTitle.contains('Push-up')) {
+                if (testTitle.toLowerCase().contains('push-up')) {
                   reportToShow = pushupReportData;
                 } else {
-                  // Add other conditions for other jump tests if you create more data
-                  reportToShow = pushupReportData; // Default to a report
+                  reportToShow = runReportData; // Default to another report
                 }
 
                 Navigator.push(
@@ -237,6 +233,8 @@ class JumpResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool canReview = recordedVideo != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context, testTitle),
@@ -257,16 +255,16 @@ class JumpResultScreen extends StatelessWidget {
                     Expanded(
                       child: _buildStyledButton(
                         text: 'Review Video',
-                        onPressed: () {
-                          if (recordedVideo != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VideoPreviewScreen(videoFile: recordedVideo!),
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: canReview
+                            ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => VideoPreviewScreen(videoFile: recordedVideo!),
+                            ),
+                          );
+                        }
+                            : null, // Button is disabled if canReview is false
                         isFilled: false,
                       ),
                     ),
@@ -275,14 +273,14 @@ class JumpResultScreen extends StatelessWidget {
                       child: _buildStyledButton(
                         text: 'Retake',
                         onPressed: () {
+                          // CORRECTED: This now correctly selects an analyzer for the retake
+                          final analyzer = _getAnalyzerForTest(testTitle);
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                               builder: (context) => CameraScreen(
-                                resultScreen: JumpResultScreen(
-                                  testTitle: testTitle,
-                                  feedback: feedback,
-                                ),
+                                analyzer: analyzer,
+                                testName: testTitle,
                               ),
                             ),
                           );
@@ -306,6 +304,21 @@ class JumpResultScreen extends StatelessWidget {
       bottomNavigationBar: _buildBottomNavBar(context),
     );
   }
+}
+
+// --- NEW HELPER FUNCTION ---
+PoseAnalyzer _getAnalyzerForTest(String testTitle) {
+  String lowerCaseTestTitle = testTitle.toLowerCase();
+  if (lowerCaseTestTitle.contains('push-up')) {
+    return PushUpAnalyzer();
+  } else if (lowerCaseTestTitle.contains('sit-up')) {
+    return SitUpAnalyzer();
+  } else if (lowerCaseTestTitle.contains('squat')) {
+    return SquatAnalyzer();
+  }
+  // Add more conditions for other tests here
+
+  return NoAIAnalyzer(); // Return a default placeholder analyzer
 }
 
 // --- Common Helper Widgets for Result Screens ---
@@ -353,7 +366,7 @@ Widget _buildFeedbackSection(String feedback) {
 
 Widget _buildStyledButton({
   required String text,
-  required VoidCallback onPressed,
+  required VoidCallback? onPressed, // Changed to allow null
   required bool isFilled,
 }) {
   return SizedBox(
@@ -366,35 +379,36 @@ Widget _buildStyledButton({
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
         elevation: 0,
+        disabledBackgroundColor: Colors.grey.shade300, // Style for disabled button
       ),
       child: Text(text, style: const TextStyle(fontSize: 16)),
     ),
   );
 }
 
-void _handleNavBarTap(BuildContext context, int index) {
-  switch (index) {
-    case 0:
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
-      break;
-    case 1:
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const TestsScreen()), (route) => false);
-      break;
-    case 2:
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProgressScreen()), (route) => false);
-      break;
-    case 3:
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfileScreen()), (route) => false);
-      break;
-  }
-}
-
 BottomNavigationBar _buildBottomNavBar(BuildContext context) {
+  void handleNavBarTap(int index) {
+    switch (index) {
+      case 0:
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
+        break;
+      case 1:
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const TestsScreen()), (route) => false);
+        break;
+      case 2:
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProgressScreen()), (route) => false);
+        break;
+      case 3:
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfileScreen()), (route) => false);
+        break;
+    }
+  }
+
   return BottomNavigationBar(
     currentIndex: 1, // Tests Tab
     selectedItemColor: primaryGreen,
     unselectedItemColor: Colors.grey.shade600,
-    onTap: (index) => _handleNavBarTap(context, index),
+    onTap: (index) => handleNavBarTap(index),
     type: BottomNavigationBarType.fixed,
     showUnselectedLabels: true,
     items: const [

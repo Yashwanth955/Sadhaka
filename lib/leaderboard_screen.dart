@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // NEW: Import the Hive service and model
-import 'hive_service.dart'; // Ensure this line is present and correct
+import 'isar_service.dart'; // Ensure this line is present and correct
 import 'leaderboard_model.dart';
 
 // Import main screens for the bottom navigation bar
@@ -18,8 +18,8 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  // NEW: Create an instance of the HiveService
-  final hiveService = HiveService(); // Changed from IsarService
+  // NEW: Create an instance of the IsarService
+  final isarService = IsarService(); 
   int _selectedTabIndex = 0;
 
   @override
@@ -60,10 +60,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ],
             ),
           ),
-          // UPDATED: User List now uses a FutureBuilder to get data from Hive
+          // UPDATED: User List now uses a FutureBuilder to get data from Isar
           Expanded(
             child: FutureBuilder<List<LeaderboardEntry>>(
-              future: hiveService.getLeaderboard(), // Changed from isarService
+              future: isarService.getLeaderboard(), 
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

@@ -1,13 +1,14 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'report_models.dart';
+import 'pdf_generator.dart'; // Make sure this is imported
 
 // Imports for navigation and database services
 import 'home_screen.dart';
 import 'tests_screen.dart';
 import 'progress_screen.dart';
 import 'profile_screen.dart';
-import 'hive_service.dart';
+import 'isar_service.dart';
 import 'test_result.dart';
 
 const primaryGreen = Color(0xFF20D36A);
@@ -60,7 +61,7 @@ class ReportScreen extends StatelessWidget {
               chartData: reportData.progressChartData,
             ),
             const SizedBox(height: 32),
-            _buildActionButtons(context),
+            _buildActionButtons(context, reportData),
           ],
         ),
       ),
@@ -223,28 +224,40 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
+  void _handlePdfAction(BuildContext context, TestReport reportData) async {
+    final success = await PdfGenerator.generateAndShareReport(reportData);
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text('Could not generate or share PDF. Please try again later.'),
+        ),
+      );
+    }
+  }
+
+  Widget _buildActionButtons(BuildContext context, TestReport reportData) {
+    final isarService = IsarService();
+
     return Column(
       children: [
         Row(
           children: [
             Expanded(child: ElevatedButton(onPressed: (){
-              Navigator.of(context).pop();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const TestsScreen()),
+                    (route) => false,
+              );
             }, style: ElevatedButton.styleFrom(backgroundColor: primaryGreen, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)), child: const Text('Retake Test'))),
             const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton(
-                // UPDATED: This button now saves the result to the Hive database
                 onPressed: () {
                   final newResult = TestResult()
                     ..testTitle = reportData.testTitle
-                    ..resultValue = reportData.progressValue
+                    ..resultValue = reportData.headlineResult
                     ..date = DateTime.now();
-
-                  // Save it to the database using the service
-                  HiveService().saveTestResult(newResult);
-
-                  // Show a confirmation message
+                  isarService.saveTestResult(newResult);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                         backgroundColor: Colors.green,
@@ -260,8 +273,16 @@ class ReportScreen extends StatelessWidget {
         ),
         Row(
           children: [
-            Expanded(child: TextButton.icon(onPressed: (){}, icon: const Icon(Icons.share_outlined), label: const Text('Share'))),
-            Expanded(child: TextButton.icon(onPressed: (){}, icon: const Icon(Icons.download_outlined), label: const Text('Download Report'))),
+            Expanded(child: TextButton.icon(
+              onPressed: () => _handlePdfAction(context, reportData),
+              icon: const Icon(Icons.share_outlined),
+              label: const Text('Share'))
+            ),
+            Expanded(child: TextButton.icon(
+              onPressed: () => _handlePdfAction(context, reportData),
+              icon: const Icon(Icons.download_outlined),
+              label: const Text('Download Report'))
+            ),
           ],
         ),
       ],

@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'auth_service.dart';
 import 'basic_details_screen.dart';
-import 'hive_service.dart'; // Import HiveService
+import 'isar_service.dart'; // Import IsarService
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -17,7 +17,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
-  final _hiveService = HiveService(); // Changed from _isarService
+  final _isarService = IsarService(); // Changed to IsarService
   bool _isLoading = false;
 
   @override
@@ -66,8 +66,8 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() { _isLoading = false; });
 
     if (user != null) {
-      // Check if this is a new user by looking in our local Hive database
-      final existingProfile = await _hiveService.getUserProfile(); // MODIFIED LINE: Removed user.uid
+      // Check if this is a new user by looking in our local Isar database
+      final existingProfile = await _isarService.getUserProfile(); // MODIFIED LINE: Changed to _isarService and removed user.uid
       if (existingProfile == null && mounted) {
         // If no profile exists, it's a new user. Go to BasicDetailsScreen.
         Navigator.pushReplacement(

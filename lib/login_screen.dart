@@ -5,7 +5,7 @@ import 'auth_service.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'basic_details_screen.dart';
-import 'hive_service.dart';
+import 'isar_service.dart'; // Changed from hive_service.dart
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
-  final _hiveService = HiveService(); // Changed from _isarService
+  final _isarService = IsarService(); // Changed from _hiveService
   bool _isLoading = false;
 
   @override
@@ -63,10 +63,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (user != null) {
       // Check if this is a new user
-      final userProfile = await _hiveService.getUserProfile(); // Changed from _isarService
+      // Assuming IsarService has a method like getUserProfile() that returns UserProfile?
+      // You might need to adjust this based on your actual IsarService implementation,
+      // especially if it needs the user's ID to fetch the profile.
+      final userProfile = await _isarService.getUserProfile(); 
       final profileExists = userProfile != null;
       if (!profileExists && mounted) {
-        // If no profile exists in Hive, navigate to BasicDetailsScreen
+        // If no profile exists in Isar, navigate to BasicDetailsScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const BasicDetailsScreen()),
@@ -94,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              const Text('SAI Fitness', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text('Sadhaka', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               const Text('Welcome Back', textAlign: TextAlign.center, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
               const SizedBox(height: 32),
@@ -139,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don\'t have an account?", style: TextStyle(color: Colors.black54)),
+                  const Text("Don't have an account?", style: TextStyle(color: Colors.black54)),
                   TextButton(
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SignupScreen())),
                     child: const Text('Sign Up', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
@@ -147,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const Spacer(),
-              const Text('\"The only bad workout is the one that didn\'t happen.\"', textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, fontStyle: FontStyle.italic)),
+              const Text('"The only bad workout is the one that didn\'t happen."', textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, fontStyle: FontStyle.italic)),
               const SizedBox(height: 24),
             ],
           ),

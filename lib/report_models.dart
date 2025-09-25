@@ -49,4 +49,34 @@ class TestReport {
     required this.progressTrend,
     required this.progressChartData,
   });
+
+  TestReport copyWith({
+    String? testTitle,
+    String? imageUrl,
+    String? headlineResult,
+    String? resultSummary,
+    List<ReportMetric>? breakdownMetrics,
+    List<ReportMetric>? comparisonMetrics,
+    List<CoachTip>? coachTips,
+    String? progressTitle,
+    String? progressValue,
+    String? progressPeriod,
+    String? progressTrend,
+    List<FlSpot>? progressChartData,
+  }) {
+    return TestReport(
+      testTitle: testTitle ?? this.testTitle,
+      imageUrl: imageUrl ?? this.imageUrl,
+      headlineResult: headlineResult ?? this.headlineResult,
+      resultSummary: resultSummary ?? this.resultSummary,
+      breakdownMetrics: breakdownMetrics ?? this.breakdownMetrics,
+      comparisonMetrics: comparisonMetrics ?? this.comparisonMetrics,
+      coachTips: coachTips ?? this.coachTips,
+      progressTitle: progressTitle ?? this.progressTitle,
+      progressValue: progressValue ?? this.progressValue,
+      progressPeriod: progressPeriod ?? this.progressPeriod,
+      progressTrend: progressTrend ?? this.progressTrend,
+      progressChartData: progressChartData ?? this.progressChartData,
+    );
+  }
 }
