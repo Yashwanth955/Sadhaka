@@ -1,94 +1,93 @@
-// lib/database_seeder.dart
+// lib/user_model.dart
 
 import 'package:isar/isar.dart';
-import 'isar_service.dart';
-import 'user_model.dart';
-import 'test_result.dart';
-import 'badge_model.dart';
-import 'leaderboard_model.dart';
 
-class DatabaseSeeder {
-  static Future<void> seed() async {
-    final isarService = IsarService();
-    final isar = await isarService.db; // Get the Isar instance asynchronously
 
-    // Check if the database is empty before seeding
-    final userProfilesCount = await isar.userProfiles.count();
-    if (userProfilesCount == 0) {
-      print("Seeding database with prototype data...");
+@collection
+@Name("UserProfile") // Explicitly naming for clarity with Isar
+class UserProfile {
+  Id id = Isar.autoIncrement;
 
-      // 1. Create Sample User Profile
-      final user = UserProfile()
-        ..name = "Arjun Sharma"
-        ..email = "arjun.sharma@example.com"
-        ..age = 25
-        ..sport = "Badminton"
-        ..height = 175
-        ..weight = 70
-        ..mobileNumber = "9876543210"
-        ..profilePhotoPath = null
-        ..coachName = "Ravi Kumar"
-        ..coachPhoneNumber = "+919988776655"
-        ..coachWhatsappNumber = "+919988776655";// No initial photo path
+  @Index(unique: true, replace: true, caseSensitive: false)
+  String firebaseUid;
 
-      // 2. Create Sample Test Results with varied dates
-      final now = DateTime.now();
-      final results = [
-        TestResult()
-          ..testTitle = "1.6km Run Test"
-          ..resultValue = "5:45 min"
-          ..date = now.subtract(const Duration(days: 2)),
-        TestResult()
-          ..testTitle = "Push-up Test"
-          ..resultValue = "25 reps"
-          ..date = now.subtract(const Duration(days: 2)),
-        TestResult()
-          ..testTitle = "Standing Broad Jump"
-          ..resultValue = "2.1m"
-          ..date = now.subtract(const Duration(days: 5)),
-        TestResult()
-          ..testTitle = "Push-up Test"
-          ..resultValue = "22 reps"
-          ..date = now.subtract(const Duration(days: 10)),
-        TestResult()
-          ..testTitle = "4*10mts Shuttle Run"
-          ..resultValue = "12.5s"
-          ..date = now.subtract(const Duration(days: 15)),
-        TestResult()
-          ..testTitle = "Sit and Reach Test"
-          ..resultValue = "15 cm"
-          ..date = now.subtract(const Duration(days: 20)),
-      ];
+  String? name;
+  String? email;
+  String? mobileNumber;
+  int? age;
+  String? sport;
+  double? height; // in cm
+  double? weight; // in kg
+  String? profilePhotoPath;
 
-      // 3. Create Sample Badges
-      final badges = [
-        Badge()..name = 'Core Strength Pro 💪'..description = 'Completed 5 core strength tests'..imageUrl = 'https://i.imgur.com/bT6R022.png'..isEarned = true,
-        Badge()..name = 'Stamina Star 🔥'..description = 'Achieved top 10% in stamina tests'..imageUrl = 'https://i.imgur.com/k2p8J5F.png'..isEarned = true,
-        Badge()..name = 'Flexibility Master 🤸'..description = 'Demonstrated exceptional flexibility'..imageUrl = 'https://i.imgur.com/8m52eSO.png'..isEarned = true,
-        Badge()..name = 'Speed Demon 🏃'..description = 'Achieve top speed in sprint tests'..imageUrl = 'https://i.imgur.com/bT6R022.png'..isEarned = false,
-        Badge()..name = 'Endurance Champ 🏆'..description = 'Complete all endurance challenges'..imageUrl = 'https://i.imgur.com/k2p8J5F.png'..isEarned = false,
-        Badge()..name = 'Powerhouse 💪'..description = 'Demonstrate exceptional power'..imageUrl = 'https://i.imgur.com/8m52eSO.png'..isEarned = false,
-      ];
+  String? coachName;
+  String? coachPhoneNumber;
+  String? coachWhatsappNumber;
+  bool isCoachUser;
 
-      // 4. Create Sample Leaderboard
-      final leaderboard = [
-        LeaderboardEntry()..rank = 1..name = 'Arjun Sharma'..score = 95..imageUrl = 'https://i.pravatar.cc/150?img=1'..region = 'India',
-        LeaderboardEntry()..rank = 2..name = 'Priya Patel'..score = 92..imageUrl = 'https://i.pravatar.cc/150?img=2'..region = 'India',
-        LeaderboardEntry()..rank = 3..name = 'Rohan Verma'..score = 90..imageUrl = 'https://i.pravatar.cc/150?img=3'..region = 'India',
-        LeaderboardEntry()..rank = 4..name = 'Anika Singh'..score = 88..imageUrl = 'https://i.pravatar.cc/150?img=4'..region = 'India',
-        LeaderboardEntry()..rank = 5..name = 'Vikram Kapoor'..score = 85..imageUrl = 'https://i.pravatar.cc/150?img=5'..region = 'India',
-      ];
+  List<String> assignedAthleteIds; // Non-nullable field
+  DateTime? createdAt;
+  String? location;
 
-      await isar.writeTxn(() async {
-        await isar.userProfiles.put(user);
-        await isar.testResults.putAll(results);
-        await isar.badges.putAll(badges);
-        await isar.leaderboardEntrys.putAll(leaderboard);
-      });
+  UserProfile({
+    required this.firebaseUid,
+    this.name,
+    this.email,
+    this.mobileNumber,
+    this.age,
+    this.sport,
+    this.height,
+    this.weight,
+    this.profilePhotoPath,
+    this.coachName,
+    this.coachPhoneNumber,
+    this.coachWhatsappNumber,
+    this.isCoachUser = false,
+    this.assignedAthleteIds = const [], // Corrected: non-nullable, defaults to empty list
+    this.createdAt,
+    this.location,
+  }) {
+    // Constructor body can be empty if all fields are initialized via parameters
+  }
 
-      print("Database seeded!");
-    } else {
-      print("Database already contains data. Seeding skipped.");
-    }
+  UserProfile copyWith({
+    Id? id,
+    String? firebaseUid,
+    String? name,
+    String? email,
+    String? mobileNumber,
+    int? age,
+    String? sport,
+    double? height,
+    double? weight,
+    String? profilePhotoPath,
+    String? coachName,
+    String? coachPhoneNumber,
+    String? coachWhatsappNumber,
+    bool? isCoachUser,
+    List<String>? assignedAthleteIds, // copyWith can accept nullable for flexibility
+    DateTime? createdAt,
+    String? location,
+  }) {
+    return UserProfile(
+      firebaseUid: firebaseUid ?? this.firebaseUid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      age: age ?? this.age,
+      sport: sport ?? this.sport,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      profilePhotoPath: profilePhotoPath ?? this.profilePhotoPath,
+      coachName: coachName ?? this.coachName,
+      coachPhoneNumber: coachPhoneNumber ?? this.coachPhoneNumber,
+      coachWhatsappNumber: coachWhatsappNumber ?? this.coachWhatsappNumber,
+      isCoachUser: isCoachUser ?? this.isCoachUser,
+      // If copyWith receives null, it keeps the existing (potentially non-empty) list.
+      // If it receives a new list, it uses that.
+      assignedAthleteIds: assignedAthleteIds ?? this.assignedAthleteIds,
+      createdAt: createdAt ?? this.createdAt,
+      location: location ?? this.location,
+    )..id = id ?? this.id;
   }
 }

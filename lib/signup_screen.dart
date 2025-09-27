@@ -67,7 +67,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (user != null) {
       // Check if this is a new user by looking in our local Isar database
-      final existingProfile = await _isarService.getUserProfile(); // MODIFIED LINE: Changed to _isarService and removed user.uid
+      final existingProfile = await _isarService.getUserProfile(user.uid);
       if (existingProfile == null && mounted) {
         // If no profile exists, it's a new user. Go to BasicDetailsScreen.
         Navigator.pushReplacement(

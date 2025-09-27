@@ -1,6 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart'; // Added import
+import 'app_state.dart'; // Added import
+import 'user_model.dart'; // Added import
 
 // Ensure all your screen files are imported
 import 'tests_screen.dart';
@@ -11,12 +14,10 @@ import 'streaks_screen.dart';
 import 'leaderboard_screen.dart';
 import 'badges_screen.dart';
 import 'resources_screen.dart';
+import 'sponsor_screen.dart';
+import 'isar_service.dart';
+import 'test_result.dart';
 
-// NEW: Import the Isar service
-import 'isar_service.dart'; // Changed from hive_service.dart
-
-
-// A simple model for our daily challenges
 class DailyChallenge {
   final String title;
   final String description;
@@ -31,17 +32,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final int _selectedIndex = 0;
+  int _selectedIndex = 0;
   late DailyChallenge _selectedChallenge;
   String _selectedTimeFrame = 'Daily';
   List<FlSpot> _chartData = [];
-  final isarService = IsarService(); // Changed from HiveService
+  final isarService = IsarService();
 
   @override
   void initState() {
     super.initState();
     _selectRandomChallenge();
-    _updateChartData(); // Load initial chart data
+    _updateChartData();
   }
 
   void _selectRandomChallenge() {
@@ -52,75 +53,60 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedChallenge = challenges[Random().nextInt(challenges.length)];
   }
 
-  // --- UPDATED: This method now fetches and processes real data from Isar ---
   Future<void> _updateChartData() async {
-    // Assuming IsarService has a similar method to get all test results.
-    // You might need to adjust this based on your IsarService implementation.
-    final allResults = await isarService.getAllTestResults(); 
-    final now = DateTime.now();
+    final allResults = await isarService.getAllTestResults();
     Map<int, double> bestScores = {};
 
-    // Helper to parse score from strings like "25 reps" or "5:45 min"
     double parseScore(String resultValue) {
-      // This is a simple parser. You can make it more robust.
       try {
-        return double.parse(resultValue.split(' ')[0]);
+        return double.parse(resultValue.replaceAll(RegExp(r'[^0-9.]'),''));
       } catch (e) {
-        return 0.0; // Default to 0 if parsing fails
+        return 0.0;
       }
     }
 
     if (_selectedTimeFrame == 'Daily') {
-      final sevenDaysAgo = now.subtract(const Duration(days: 6));
-      // Ensure your TestResult model (if that's what allResults contains) has a 'date' field.
-      final recentResults = allResults.where((r) => r.date.isAfter(sevenDaysAgo) && r.date.isBefore(now.add(const Duration(days: 1)))).toList();
+      final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 6));
+      final recentResults = allResults.where((r) => r.date.isAfter(sevenDaysAgo)).toList();
 
       for (var result in recentResults) {
-        int dayIndex = 6 - now.difference(result.date).inDays;
+        int dayIndex = 6 - DateTime.now().difference(result.date).inDays;
         if (dayIndex >= 0 && dayIndex < 7) {
-          // Ensure your TestResult model has a 'resultValue' field.
-          double score = parseScore(result.resultValue); 
+          double score = parseScore(result.resultValue);
           if (score > (bestScores[dayIndex] ?? 0.0)) {
             bestScores[dayIndex] = score;
           }
         }
       }
     }
-    // Add 'Weekly' and 'Monthly' logic here if needed
-    // ...
+    // You can add 'Weekly' and 'Monthly' logic here
 
-    // Fill in missing days with the previous day's score or 0
     double lastScore = 0;
     List<FlSpot> spots = List.generate(7, (index) {
       if (bestScores.containsKey(index)) {
         lastScore = bestScores[index]!;
         return FlSpot(index.toDouble(), bestScores[index]!);
       } else {
-        // You can either carry the last score forward or use 0
         return FlSpot(index.toDouble(), lastScore);
       }
     });
 
-    setState(() {
-      _chartData = spots;
-    });
+    if(mounted) {
+      setState(() {
+        _chartData = spots;
+      });
+    }
   }
 
-
   void _onItemTapped(int index) {
-    switch (index) {
-      case 0:
-        break;
-      case 1:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const TestsScreen()));
-        break;
-      case 2:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProgressScreen()));
-        break;
-      case 3:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-        break;
-    }
+    if(index == 0) return; // Already on home
+    final screens = [
+      const HomeScreen(), // Index 0
+      const TestsScreen(),  // Index 1
+      const ProgressScreen(),// Index 2
+      const ProfileScreen() // Index 3
+    ];
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => screens[index]));
   }
 
   @override
@@ -141,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildTopBar(),
                 const SizedBox(height: 24),
-                _buildGreetingSection(),
+                _buildGreetingSection(context), // MODIFIED LINE
                 const SizedBox(height: 24),
                 _buildConsistencyBanner(primaryGreen, darkCardBg),
                 const SizedBox(height: 20),
@@ -153,12 +139,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 30),
                 _buildBadgesSection(darkCardBg, greyText),
                 const SizedBox(height: 30),
-                _buildResourcesSection(greyText),
-                const SizedBox(height: 30),
+                _buildSponsorMatchingCard(context),
+                const SizedBox(height: 20),
                 _buildDailyChallengeCard(primaryGreen, _selectedChallenge),
                 const SizedBox(height: 20),
-                _buildAiInsightsCard(),
-                const SizedBox(height: 20),
+                _buildResourcesSection(greyText),
+                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -168,13 +154,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET BUILDER METHODS (some omitted for brevity but are in your file) ---
+  // --- WIDGET BUILDER METHODS ---
 
   Widget _buildTopBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Saadhaka', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const Text('Sadhak', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         IconButton(
           icon: const Icon(Icons.notifications_none_outlined, size: 28),
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen())),
@@ -183,8 +169,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGreetingSection() {
-    return const Text('Hi Arjun 👋, ready to test\nyour fitness today?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold));
+  Widget _buildGreetingSection(BuildContext context) { // MODIFIED LINE
+    final appState = Provider.of<AppState>(context, listen: false); // ADDED LINE
+    final userProfile = appState.userProfile; // ADDED LINE
+    String userName = userProfile?.name ?? 'User'; // ADDED LINE
+    return Text('Hi $userName 👋, ready to test\nyour fitness today?', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)); // MODIFIED LINE
   }
 
   Widget _buildConsistencyBanner(Color primaryGreen, Color darkCardBg) {
@@ -197,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
           image: DecorationImage(
             image: NetworkImage('https://images.unsplash.com/photo-1519861531473-9200262188bf?q=80&w=2071'),
             fit: BoxFit.cover,
-            opacity: 0.2, // This opacity on DecorationImage is fine
+            opacity: 0.2,
           ),
         ),
         child: Row(
@@ -253,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (newValue != null) {
                   setState(() {
                     _selectedTimeFrame = newValue;
-                    _updateChartData(); // Refresh chart with new time frame
+                    _updateChartData();
                   });
                 }
               },
@@ -268,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SizedBox(
           height: 120,
           child: _chartData.isEmpty
-              ? const Center(child: Text('Save some test results to see your progress!'))
+              ? const Center(child: Text('Save test results to see your scores!'))
               : LineChart(
             LineChartData(
               gridData: const FlGridData(show: false),
@@ -280,16 +269,15 @@ class _HomeScreenState extends State<HomeScreen> {
               borderData: FlBorderData(show: false),
               lineBarsData: [
                 LineChartBarData(
-                  spots: _chartData, // Use the dynamic data
+                  spots: _chartData,
                   isCurved: true,
                   color: primaryGreen,
                   barWidth: 4,
-                  isStrokeCapRound: true,
                   dotData: const FlDotData(show: false),
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
-                      colors: [primaryGreen.withAlpha((255 * 0.3).round()), primaryGreen.withAlpha((255 * 0.0).round())],
+                      colors: [primaryGreen.withOpacity(0.3), primaryGreen.withOpacity(0.0)],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -354,21 +342,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildResourcesSection(Color greyText) {
-    return InkWell(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ResourcesScreen())),
-      child: Column(
-        children: [
-          _buildSectionHeader('Resources'),
-          const SizedBox(height: 16),
-          _buildInfoTile(Icons.description_outlined, 'Warm-up Guides', null, greyText),
-          const Divider(height: 24, thickness: 1),
-          _buildInfoTile(Icons.shield_outlined, 'Safety Tips', null, greyText),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDailyChallengeCard(Color primaryGreen, DailyChallenge challenge) {
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -378,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: const BoxDecoration(image: DecorationImage(image: NetworkImage('https://images.unsplash.com/photo-1548933122-5fed123a7e53?q=80&w=2070'), fit: BoxFit.cover)),
         child: Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.black.withAlpha((255 * 0.4).round())),
+          decoration: BoxDecoration(color: Colors.black.withOpacity(0.4)),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -394,32 +367,67 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  Widget _buildAiInsightsCard() {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+  Widget _buildSponsorMatchingCard(BuildContext context) {
+    const primaryGreen = Color(0xFF20D36A); // Defining primaryGreen for button styling
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SponsorScreen())),
       child: Container(
-        height: 150,
-        decoration: const BoxDecoration(image: DecorationImage(image: NetworkImage('https://images.unsplash.com/photo-1612871689353-cccf581d8ec4?q=80&w=2070'), fit: BoxFit.cover)),
+        // height: 180, // Height might need to be adjusted or removed for the button
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20.0),
+          image: const DecorationImage(
+            image: AssetImage('assets/images/sponsership.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
         child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.black.withAlpha((255 * 0.4).round())),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Expanded(child: Text('AI Insights:\nPersonalized Training', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
-                child: const Text('View'),
-              ),
-            ],
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(15.0), color: Colors.black.withOpacity(0.5)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column( // Ensure this is a Column
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('Sponsor Matching', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
+                const SizedBox(height: 8),
+                const Text('Let our AI find the perfect sponsors for you.', style: TextStyle(fontSize: 16, color: Colors.white70), textAlign: TextAlign.center),
+                const SizedBox(height: 16), // Added space before the button
+                ElevatedButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SponsorScreen())),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen, // Using the primary green color
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('View Details'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildResourcesSection(Color greyText) {
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ResourcesScreen())),
+      child: Column(
+        children: [
+          _buildSectionHeader('Resources'),
+          const SizedBox(height: 16),
+          _buildInfoTile(Icons.description_outlined, 'Warm-up Guides', null, greyText),
+          const Divider(height: 24, thickness: 1),
+          _buildInfoTile(Icons.shield_outlined, 'Safety Tips', null, greyText),
+        ],
+      ),
+    );
+  }
+
+
 
   Widget _buildInfoTile(IconData icon, String title, String? subtitle, Color greyText) {
     return Row(
@@ -452,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBottomNavigationBar(Color primaryGreen, Color greyText) {
+  BottomNavigationBar _buildBottomNavigationBar(Color primaryGreen, Color greyText) {
     return BottomNavigationBar(
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),

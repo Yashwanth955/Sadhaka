@@ -1,23 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+import 'package:sadhak/tests_screen.dart'; // For TestInfo
+import 'package:sadhak/camera_screen.dart'; // For CameraScreen
 
-// Import main screens for the bottom navigation bar
+// Import main screens for the bottom navigation bar (if needed, or remove if not used here)
 import 'home_screen.dart';
-import 'tests_screen.dart';
 import 'progress_screen.dart';
 import 'profile_screen.dart';
 
-class TestInstructionScreen extends StatelessWidget {
-  final String testTitle;
-  // UPDATED: This screen now accepts the camera screen directly.
-  final Widget cameraScreen;
-  final List<String> rules;
+class TestInstructionScreen extends StatefulWidget {
+  final TestInfo testInfo;
 
   const TestInstructionScreen({
     super.key,
-    required this.testTitle,
-    required this.cameraScreen, // Changed from resultScreen
-    required this.rules,
+    required this.testInfo,
   });
+
+  @override
+  State<TestInstructionScreen> createState() => _TestInstructionsScreenState();
+}
+
+class _TestInstructionsScreenState extends State<TestInstructionScreen> {
+  VideoPlayerController? _controller;
+  Future<void>? _initializeVideoPlayerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.testInfo.demoVideoPath != null && widget.testInfo.demoVideoPath!.isNotEmpty) {
+      _controller = VideoPlayerController.asset(widget.testInfo.demoVideoPath!);
+      _initializeVideoPlayerFuture = _controller!.initialize().then((_) {
+        // Ensure the first frame is shown after the video is initialized,
+        // and Ccall setState to rebuild the UI.
+        setState(() {});
+      }).catchError((error) {
+        // Handle error during initialization, e.g., video not found
+        print("Error initializing video: $error");
+        setState(() {
+          _controller = null; // Clear controller on error
+        });
+      });
+      _controller!.setLooping(true);
+    } else {
+       // Set _initializeVideoPlayerFuture to a completed future if no video path
+      _initializeVideoPlayerFuture = Future.value();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +65,7 @@ class TestInstructionScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          testTitle,
+          widget.testInfo.title,
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -54,19 +88,58 @@ class TestInstructionScreen extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(16),
-                  image: const DecorationImage(
-                    image: NetworkImage('https://i.imgur.com/G06sW7s.jpeg'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: const Icon(Icons.play_circle, color: Colors.white, size: 60),
-              ),
+            FutureBuilder(
+              future: _initializeVideoPlayerFuture,
+              builder: (context, snapshot) {
+                if (_controller != null && _controller!.value.isInitialized) {
+                  return AspectRatio(
+                    aspectRatio: _controller!.value.aspectRatio,
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: <Widget>[
+                        VideoPlayer(_controller!),
+                        VideoProgressIndicator(_controller!, allowScrubbing: true),
+                        _PlayPauseOverlay(controller: _controller!),
+                      ],
+                    ),
+                  );
+                } else if (snapshot.connectionState == ConnectionState.waiting) {
+                  return AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
+                    )
+                  );
+                } else {
+                  // If no video or error, show placeholder (e.g., original image or an icon)
+                  return AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(16),
+                        image: widget.testInfo.imageUrl.isNotEmpty 
+                               ? DecorationImage(
+                                   image: AssetImage(widget.testInfo.imageUrl),
+                                   fit: BoxFit.cover,
+                                 )
+                               : null,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          widget.testInfo.imageUrl.isNotEmpty ? Icons.play_circle_outline : Icons.videocam_off,
+                          color: Colors.white,
+                          size: 60,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              },
             ),
             const SizedBox(height: 24),
             const Text(
@@ -76,20 +149,26 @@ class TestInstructionScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
-                itemCount: rules.length,
+                itemCount: widget.testInfo.rules.length,
                 itemBuilder: (context, index) {
-                  return _buildRule(index + 1, rules[index]);
+                  return _buildRule(widget.testInfo.rules[index]);
                 },
               ),
             ),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                // UPDATED: The button now navigates to the provided cameraScreen.
                 onPressed: () {
+                  // Navigate to CameraScreen with all required parameters
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => cameraScreen),
+                    MaterialPageRoute(
+                      builder: (context) => CameraScreen(
+                        analyzer: widget.testInfo.analyzer,
+                        testName: widget.testInfo.title,
+                        durationInSeconds: widget.testInfo.durationInSeconds, // Pass the duration
+                      ),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -110,16 +189,59 @@ class TestInstructionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRule(int number, String text) {
+  Widget _buildRule(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$number. ', style: const TextStyle(fontSize: 16, height: 1.5, fontWeight: FontWeight.bold)),
+          const Text('• ', style: TextStyle(fontSize: 16, height: 1.5, fontWeight: FontWeight.bold)),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 16, height: 1.5))),
         ],
       ),
+    );
+  }
+}
+
+class _PlayPauseOverlay extends StatefulWidget {
+  final VideoPlayerController controller;
+
+  const _PlayPauseOverlay({required this.controller});
+
+  @override
+  State<_PlayPauseOverlay> createState() => _PlayPauseOverlayState();
+}
+
+class _PlayPauseOverlayState extends State<_PlayPauseOverlay> {
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 50),
+          reverseDuration: const Duration(milliseconds: 200),
+          child: widget.controller.value.isPlaying
+              ? const SizedBox.shrink()
+              : Container(
+                  color: Colors.black26,
+                  child: const Center(
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 100.0,
+                      semanticLabel: 'Play',
+                    ),
+                  ),
+                ),
+        ),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              widget.controller.value.isPlaying ? widget.controller.pause() : widget.controller.play();
+            });
+          },
+        ),
+      ],
     );
   }
 }
@@ -133,6 +255,8 @@ BottomNavigationBar _buildBottomNavBar(BuildContext context) {
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
         break;
       case 1:
+        // If you want to go back to TestsScreen, ensure it's imported and TestInfo is handled if it needs it.
+        // For now, this assumes TestsScreen() constructor is parameterless.
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const TestsScreen()), (route) => false);
         break;
       case 2:
@@ -145,7 +269,7 @@ BottomNavigationBar _buildBottomNavBar(BuildContext context) {
   }
 
   return BottomNavigationBar(
-    currentIndex: 1, // Tests Tab
+    currentIndex: 1, // This might need to be dynamic if TestInstructionScreen can be accessed from different tabs
     selectedItemColor: primaryGreen,
     unselectedItemColor: Colors.grey.shade600,
     onTap: handleNavBarTap,

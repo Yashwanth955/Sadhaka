@@ -46,7 +46,7 @@ class ProfileScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: FutureBuilder<UserProfile?>(
-        future: isarService.getUserProfile(), // Corrected: No arguments
+        future: isarService.getCurrentUserProfile(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -65,7 +65,7 @@ class ProfileScreen extends StatelessWidget {
                   radius: 60,
                   backgroundImage: userProfile.profilePhotoPath != null
                       ? FileImage(File(userProfile.profilePhotoPath!)) as ImageProvider
-                      : const NetworkImage('https://i.imgur.com/8Km9t6T.jpeg'),
+                      : const AssetImage('assests/images/placeholder.png'),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -99,8 +99,8 @@ class ProfileScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildDetailItem('Mobile', userProfile.mobileNumber ?? 'N/A'),
-                    _buildDetailItem('Sport', userProfile.sport ?? 'N/A'),
+                    _buildDetailItem('Mobile', userProfile.mobileNumber ?? '9955854217'),
+                    _buildDetailItem('Sport', userProfile.sport ?? 'Running'),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -140,7 +140,7 @@ class ProfileScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Coach Mode', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const Text('Coach', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Card(
           elevation: 2,

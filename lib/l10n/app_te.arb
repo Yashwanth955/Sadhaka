@@ -1,0 +1,21 @@
+{
+  "@@locale": "te",
+  "appTitle": "[సాధక్ - Sadhak in Telugu]",
+  "cameraScreenTitle": "[కెమెరా - Camera in Telugu]",
+  "startTestButton": "[పరీక్షను ప్రారంభించండి - Start Test in Telugu]",
+  "stopTestButton": "[పరీక్షను ఆపండి - Stop Test in Telugu]",
+  "testInstructionsTitle": "[పరీక్ష సూచనలు - Test Instructions in Telugu]",
+  "loginScreenAppName": "[Sadhaka - Telugu]",
+  "loginWelcomeBack": "[Welcome Back - Telugu]",
+  "loginEmailHint": "[Email or Username - Telugu]",
+  "loginPasswordHint": "[Password - Telugu]",
+  "loginForgotPassword": "[Forgot Password? - Telugu]",
+  "loginButton": "[Login - Telugu]",
+  "loginFailedError": "[Login failed. Please check your credentials. - Telugu]",
+  "loginOrContinueWith": "[Or continue with - Telugu]",
+  "loginContinueWithGoogle": "[Continue with Google - Telugu]",
+  "loginContinueWithApple": "[Continue with Apple - Telugu]",
+  "loginDontHaveAccount": "[Don't have an account? - Telugu]",
+  "loginSignUpButton": "[Sign Up - Telugu]",
+  "loginMotivationalQuote": "[\"The only bad workout is the one that didn't happen.\" - Telugu]"
+}

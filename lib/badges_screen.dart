@@ -102,7 +102,7 @@ class BadgesScreen extends StatelessWidget {
         return _buildBadgeItem(
           name: badge.name,
           description: badge.description,
-          imageUrl: badge.imageUrl,
+          imageUrl: 'assests/images/endurancechamp.png',
           isEarned: isEarned, // This uses the isEarned from the badge itself if it's an earned list, or the parameter
         );
       },

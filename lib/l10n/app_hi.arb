@@ -1,0 +1,21 @@
+{
+  "@@locale": "hi",
+  "appTitle": "[साधक - Sadhak in Hindi]",
+  "cameraScreenTitle": "[कैमरा - Camera in Hindi]",
+  "startTestButton": "[परीक्षण शुरू करें - Start Test in Hindi]",
+  "stopTestButton": "[परीक्षण रोकें - Stop Test in Hindi]",
+  "testInstructionsTitle": "[परीक्षण निर्देश - Test Instructions in Hindi]",
+  "loginScreenAppName": "[Sadhaka - Hindi]",
+  "loginWelcomeBack": "[Welcome Back - Hindi]",
+  "loginEmailHint": "[Email or Username - Hindi]",
+  "loginPasswordHint": "[Password - Hindi]",
+  "loginForgotPassword": "[Forgot Password? - Hindi]",
+  "loginButton": "[Login - Hindi]",
+  "loginFailedError": "[Login failed. Please check your credentials. - Hindi]",
+  "loginOrContinueWith": "[Or continue with - Hindi]",
+  "loginContinueWithGoogle": "[Continue with Google - Hindi]",
+  "loginContinueWithApple": "[Continue with Apple - Hindi]",
+  "loginDontHaveAccount": "[Don't have an account? - Hindi]",
+  "loginSignUpButton": "[Sign Up - Hindi]",
+  "loginMotivationalQuote": "[\"The only bad workout is the one that didn't happen.\" - Hindi]"
+}

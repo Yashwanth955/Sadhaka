@@ -1,91 +1,110 @@
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart'; // Needed for Isar.open
-import 'test_result.dart'; // Assuming this and other models are updated for Isar
-import 'user_model.dart';
-import 'leaderboard_model.dart';
-import 'badge_model.dart';
+// lib/isar_service.dart
 
-// You'll need to generate these files using build_runner
-// Removed direct imports of .g.dart files
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'test_result.dart';
+import 'user_model.dart';
+import 'badge_model.dart';
+import 'leaderboard_model.dart';
+import 'match_model.dart';   // Make sure this is imported
+import 'sponsor_model.dart'; // Make sure this is imported
 
 class IsarService {
-  late Future<Isar> db;
-
   // --- Singleton Setup ---
   static final IsarService _instance = IsarService._internal();
   factory IsarService() => _instance;
-
   IsarService._internal() {
-    db = _openIsar();
-  }
-
-  Future<Isar> _openIsar() async {
-    if (Isar.instanceNames.isEmpty) {
-      final dir = await getApplicationDocumentsDirectory();
-      // Ensure your model schemas are included here
-      return await Isar.open(
-        [
-          UserProfileSchema,
-          TestResultSchema,
-          BadgeSchema,
-          LeaderboardEntrySchema,
-        ],
-        directory: dir.path,
-        name: 'sadhakIsarDB', // Optional: name your Isar instance
-        inspector: true, // <--- ADDED THIS LINE
-      );
-    }
-    return Future.value(Isar.getInstance('sadhakIsarDB'));
+    db = openDB();
   }
   // --- End of Singleton Setup ---
 
-  // --- Seeding Method ---
-  Future<void> seedDatabase({
-    required UserProfile user,
-    required List<TestResult> results,
-    required List<Badge> badges,
-    required List<LeaderboardEntry> leaderboard,
-  }) async {
-    final isar = await db;
-    
-    // Check if the database is empty by checking one of the collections
-    final userCount = await isar.userProfiles.count();
-    if (userCount == 0) {
-      //print("Seeding database with Isar...");
-      await isar.writeTxn(() async {
-        // Seed User Profile
-        // Isar auto-increments IDs, or you manage them.
-        // For a single user profile, you might fetch by a known property or just the first one.
-        // For simplicity, we just put it. If it's meant to be unique and single,
-        // you'd typically clear existing or use a fixed ID if your model supports it.
-        await isar.userProfiles.put(user);
+  late Future<Isar> db;
 
-        // Seed other data
-        await isar.testResults.putAll(results);
-        await isar.badges.putAll(badges);
-        await isar.leaderboardEntrys.putAll(leaderboard);
-      });
-      //print("Isar Database seeded!");
-    } else {
-      //print("Isar Database already seeded.");
+  Future<Isar> openDB() async {
+    if (Isar.instanceNames.isEmpty) {
+      final dir = await getApplicationDocumentsDirectory();
+      return await Isar.open(
+        [
+          TestResultSchema,
+          UserProfileSchema,
+          BadgeSchema,
+          LeaderboardEntrySchema,
+          MatchSchema,      // Add new schema
+          SponsorSchema,    // Add new schema
+        ],
+        directory: dir.path,
+        inspector: true,
+      );
     }
+    return Future.value(Isar.getInstance());
   }
 
-  // --- User Profile Methods ---
-  Future<void> saveUserProfile(UserProfile userProfile) async {
-    final isar = await db;
+  // Method to create a dummy user for testing
+  Future<void> createDummyUser() async {
+    final isar = await db; // db is your Future<Isar>
+
+    // Check if a user with this UID already exists
+    // Note: The UserProfile model uses 'firebaseUid' field for the UID.
+    final existingUser = await isar.userProfiles.filter().firebaseUidEqualTo("dummyUser123").findFirst();
+    if (existingUser != null) {
+      print('Dummy user with UID dummyUser123 already exists in IsarService.');
+      return;
+    }
+
+    final dummyProfile = UserProfile(firebaseUid: "dummyUser123") // Using UserProfile() directly
+      // ..firebaseUid = "dummyUser123" // Assuming 'firebaseUid' is the correct field name
+      ..name = "Alex Rider"
+      ..email = "alex.rider@example.com"
+      ..mobileNumber = "9876543210"
+      ..age = 28
+      ..sport = "Triathlon"
+      ..height = 175.0
+      ..weight = 70.0
+      ..profilePhotoPath = null // Or a path to a dummy asset if you have one
+      ..coachName = "Ms. Jones"
+      ..coachPhoneNumber = "0123456789"
+      ..coachWhatsappNumber = "0123456789";
+
     await isar.writeTxn(() async {
-      // Assuming UserProfile has an 'id' field managed by Isar or manually set.
-      // If it's a single profile, you might query for an existing one first.
-      await isar.userProfiles.put(userProfile);
+      await isar.userProfiles.put(dummyProfile);
+      print('Dummy user "Alex Rider" (UID: dummyUser123) created successfully by IsarService.');
     });
   }
 
-  Future<UserProfile?> getUserProfile() async {
+  // --- Seeding Method ---
+  Future<void> seedDatabase(/*...seeding parameters...*/) async {
+    // ... (Your existing seeder logic)
+  }
+
+  // --- User Profile Methods ---
+  Future<void> saveUserProfile(UserProfile newUserProfile) async {
     final isar = await db;
-    // Assuming there's only one user profile or you want the first one.
-    // If you have a specific way to identify the user (e.g., a unique username or fixed ID),
-    // you would query by that. For now, just gets the first entry.
+    await isar.writeTxn(() async {
+      await isar.userProfiles.put(newUserProfile);
+    });
+  }
+
+  Future<UserProfile?> getUserProfile(String uid) async {
+    final isar = await db;
+    // Query by the String 'firebaseUid' field on UserProfile.
+    return await isar.userProfiles.where().firebaseUidEqualTo(uid).findFirst();
+  }
+
+  // Method specifically for basic_details_screen.dart
+  Future<UserProfile?> getUserProfileByFirebaseUid(String firebaseUid) async {
+    final isar = await db;
+    return await isar.userProfiles.where().firebaseUidEqualTo(firebaseUid).findFirst();
+  }
+
+  // ADDED: The missing method for login_screen.dart
+  Future<UserProfile?> getUserProfileById(String userId) async {
+    final isar = await db;
+    // Query by the String 'firebaseUid' field on UserProfile.
+    return await isar.userProfiles.where().firebaseUidEqualTo(userId).findFirst();
+  }
+
+  Future<UserProfile?> getCurrentUserProfile() async {
+    final isar = await db;
     return await isar.userProfiles.where().findFirst();
   }
 
@@ -96,7 +115,6 @@ class IsarService {
       await isar.testResults.put(newResult);
     });
   }
-
   Future<List<TestResult>> getAllTestResults() async {
     final isar = await db;
     return await isar.testResults.where().findAll();
@@ -105,26 +123,37 @@ class IsarService {
   // --- Badge Methods ---
   Future<List<Badge>> getEarnedBadges() async {
     final isar = await db;
-    // Assuming Badge model has an 'isEarned' boolean field and an index on it for performance.
     return await isar.badges.filter().isEarnedEqualTo(true).findAll();
   }
-
   Future<List<Badge>> getUnearnedBadges() async {
     final isar = await db;
-    // Assuming Badge model has an 'isEarned' boolean field and an index on it for performance.
     return await isar.badges.filter().isEarnedEqualTo(false).findAll();
   }
 
   // --- Leaderboard Methods ---
   Future<List<LeaderboardEntry>> getLeaderboard() async {
     final isar = await db;
-    // Assuming LeaderboardEntry model has a 'rank' integer field and an index on it for sorting.
+    // Use the accessor Isar generates (e.g., lowercase model name + 's')
     return await isar.leaderboardEntrys.where().sortByRank().findAll();
   }
 
-  // Optional: Method to close Isar instance if needed
-  Future<void> close() async {
+  // --- NEW: Methods for Matching Service ---
+  Future<List<Sponsor>> getAllSponsors() async {
     final isar = await db;
-    await isar.close();
+    return await isar.sponsors.where().findAll();
+  }
+
+  Future<void> saveMatches(List<Match> matches) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      // CORRECTED: Use the correct collection name `matches`
+      await isar.matchs.putAll(matches);
+    });
+  }
+
+  Future<List<Match>> getMatches() async {
+    final isar = await db;
+    // CORRECTED: Use the correct collection name `matches`
+    return await isar.matchs.where().findAll();
   }
 }

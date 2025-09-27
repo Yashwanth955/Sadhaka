@@ -21,42 +21,45 @@ class PosePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // UPDATED: Thinner lines and smaller dots for a cleaner look
-    final paint = Paint()
-      ..color = formIsCorrect ? Colors.greenAccent : Colors.redAccent
-      ..strokeWidth = 3 // Thinner lines
-      ..strokeCap = StrokeCap.round;
+    final lineColor = formIsCorrect ? Colors.greenAccent : Colors.redAccent;
 
-    // final dotPaint = Paint() // Removed this unused variable
-    //   ..color = formIsCorrect ? Colors.greenAccent : Colors.redAccent
-    //   ..strokeWidth = 6 // Smaller dots
-    //   ..strokeCap = StrokeCap.round;
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 1.5 // Adjusted for thinner lines
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke; // Ensure it's for lines
+
+    final jointPaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 4.0 // Or a different size for the joint radius
+      ..style = PaintingStyle.fill; // Filled circles for joints
 
     for (final pose in poses) {
-      // CORRECTED: This scaling logic is more robust and handles camera mirroring
       Offset scale(double x, double y) {
+        // ... your existing scaling logic remains the same ...
         final double scaleX = size.width / imageSize.height;
         final double scaleY = size.height / imageSize.width;
-        final double scale = scaleX < scaleY ? scaleX : scaleY;
+        final double scaleFactor = scaleX < scaleY ? scaleX : scaleY; // Renamed for clarity
 
-        final double offsetX = (size.width - imageSize.height * scale) / 2;
-        final double offsetY = (size.height - imageSize.width * scale) / 2;
+        final double offsetX = (size.width - imageSize.height * scaleFactor) / 2;
+        final double offsetY = (size.height - imageSize.width * scaleFactor) / 2;
 
-        double scaledX = x * scale + offsetX;
+        double scaledX = x * scaleFactor + offsetX;
 
-        // Flip the X-coordinate if using the front camera
         if (cameraLensDirection == CameraLensDirection.front) {
           scaledX = size.width - scaledX;
         }
-
-        return Offset(scaledX, y * scale + offsetY);
+        return Offset(scaledX, y * scaleFactor + offsetY);
       }
 
       void drawLine(PoseLandmarkType type1, PoseLandmarkType type2) {
         final landmark1 = pose.landmarks[type1];
         final landmark2 = pose.landmarks[type2];
         if (landmark1 != null && landmark2 != null) {
-          canvas.drawLine(scale(landmark1.x, landmark1.y), scale(landmark2.x, landmark2.y), paint);
+          canvas.drawLine(
+              scale(landmark1.x, landmark1.y),
+              scale(landmark2.x, landmark2.y),
+              linePaint); // Use linePaint
         }
       }
 
@@ -77,6 +80,17 @@ class PosePainter extends CustomPainter {
       drawLine(PoseLandmarkType.leftKnee, PoseLandmarkType.leftAnkle);
       drawLine(PoseLandmarkType.rightHip, PoseLandmarkType.rightKnee);
       drawLine(PoseLandmarkType.rightKnee, PoseLandmarkType.rightAnkle);
+
+      // Draw joints
+      for (final landmarkEntry in pose.landmarks.entries) {
+        final landmark = landmarkEntry.value; // PoseLandmark object
+        // Optionally, you can filter which landmarks to draw,
+        // e.g., if (landmark.type == PoseLandmarkType.leftWrist || ...)
+        if (landmark != null) { // Check if landmark exists
+          final Offset landmarkPosition = scale(landmark.x, landmark.y);
+          canvas.drawCircle(landmarkPosition, 3.0, jointPaint); // Draw a circle with radius 3.0
+        }
+      }
     }
   }
 

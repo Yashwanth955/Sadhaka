@@ -1,0 +1,21 @@
+{
+  "@@locale": "kn",
+  "appTitle": "[ಸಾಧಕ್ - Sadhak in Kannada]",
+  "cameraScreenTitle": "[ಕ್ಯಾಮೆರಾ - Camera in Kannada]",
+  "startTestButton": "[ಪರೀಕ್ಷೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ - Start Test in Kannada]",
+  "stopTestButton": "[ಪರೀಕ್ಷೆಯನ್ನು ನಿಲ್ಲಿಸಿ - Stop Test in Kannada]",
+  "testInstructionsTitle": "[ಪರೀಕ್ಷಾ ಸೂಚನೆಗಳು - Test Instructions in Kannada]",
+  "loginScreenAppName": "[Sadhaka - Kannada]",
+  "loginWelcomeBack": "[Welcome Back - Kannada]",
+  "loginEmailHint": "[Email or Username - Kannada]",
+  "loginPasswordHint": "[Password - Kannada]",
+  "loginForgotPassword": "[Forgot Password? - Kannada]",
+  "loginButton": "[Login - Kannada]",
+  "loginFailedError": "[Login failed. Please check your credentials. - Kannada]",
+  "loginOrContinueWith": "[Or continue with - Kannada]",
+  "loginContinueWithGoogle": "[Continue with Google - Kannada]",
+  "loginContinueWithApple": "[Continue with Apple - Kannada]",
+  "loginDontHaveAccount": "[Don't have an account? - Kannada]",
+  "loginSignUpButton": "[Sign Up - Kannada]",
+  "loginMotivationalQuote": "[\"The only bad workout is the one that didn't happen.\" - Kannada]"
+}

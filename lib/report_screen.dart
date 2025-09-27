@@ -10,6 +10,7 @@ import 'progress_screen.dart';
 import 'profile_screen.dart';
 import 'isar_service.dart';
 import 'test_result.dart';
+import 'matching_service.dart';
 
 const primaryGreen = Color(0xFF20D36A);
 const lightGreyButton = Color(0xFFF0F0F0);
@@ -224,18 +225,7 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  void _handlePdfAction(BuildContext context, TestReport reportData) async {
-    final success = await PdfGenerator.generateAndShareReport(reportData);
-    if (!success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: Colors.red,
-          content: Text('Could not generate or share PDF. Please try again later.'),
-        ),
-      );
-    }
-  }
-
+  // UPDATED: This widget now correctly saves the dynamic results and triggers matching
   Widget _buildActionButtons(BuildContext context, TestReport reportData) {
     final isarService = IsarService();
 
@@ -252,18 +242,26 @@ class ReportScreen extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton(
-                onPressed: () {
+                onPressed: () async { // Make the function async
+                  // Create a TestResult object with the actual analyzed data
                   final newResult = TestResult()
                     ..testTitle = reportData.testTitle
-                    ..resultValue = reportData.headlineResult
+                    ..resultValue = reportData.headlineResult // Use the main result (e.g., "25 Reps")
                     ..date = DateTime.now();
-                  isarService.saveTestResult(newResult);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        backgroundColor: Colors.green,
-                        content: Text('Result saved successfully!')
-                    ),
-                  );
+
+                  await isarService.saveTestResult(newResult);
+
+                  // NEW: Run the matching service after saving a result
+                  await MatchingService().findAndSaveMatches();
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          backgroundColor: Colors.green,
+                          content: Text('Result saved and checked for matches!')
+                      ),
+                    );
+                  }
                 },
                 style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
                 child: const Text('Save Result'),
@@ -274,14 +272,14 @@ class ReportScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(child: TextButton.icon(
-              onPressed: () => _handlePdfAction(context, reportData),
-              icon: const Icon(Icons.share_outlined),
-              label: const Text('Share'))
+                onPressed: () => PdfGenerator.generateAndShareReport(reportData),
+                icon: const Icon(Icons.share_outlined),
+                label: const Text('Share'))
             ),
             Expanded(child: TextButton.icon(
-              onPressed: () => _handlePdfAction(context, reportData),
-              icon: const Icon(Icons.download_outlined),
-              label: const Text('Download Report'))
+                onPressed: () => PdfGenerator.generateAndShareReport(reportData),
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Download Report'))
             ),
           ],
         ),

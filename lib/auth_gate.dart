@@ -23,8 +23,7 @@ class _AuthGateState extends State<AuthGate> {
 
     // Create a default UserProfile for the logged-in user
     // Some fields might be null or default if not available directly from Firebase auth
-    UserProfile newUserProfile = UserProfile()
-      ..firebaseUid = firebaseUser.uid
+    UserProfile newUserProfile = UserProfile(firebaseUid: firebaseUser.uid) // MODIFIED LINE
       ..email = firebaseUser.email ?? 'N/A'
       ..name = firebaseUser.displayName ?? 'New User' // Or a default name
       ..age = 0 // Default age, user can update later

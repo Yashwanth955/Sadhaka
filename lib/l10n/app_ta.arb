@@ -1,0 +1,21 @@
+{
+  "@@locale": "ta",
+  "appTitle": "[சாதக் - Sadhak in Tamil]",
+  "cameraScreenTitle": "[கேமரா - Camera in Tamil]",
+  "startTestButton": "[சோதனையைத் தொடங்கு - Start Test in Tamil]",
+  "stopTestButton": "[சோதனையை நிறுத்து - Stop Test in Tamil]",
+  "testInstructionsTitle": "[சோதனை வழிமுறைகள் - Test Instructions in Tamil]",
+  "loginScreenAppName": "[Sadhaka - Tamil]",
+  "loginWelcomeBack": "[Welcome Back - Tamil]",
+  "loginEmailHint": "[Email or Username - Tamil]",
+  "loginPasswordHint": "[Password - Tamil]",
+  "loginForgotPassword": "[Forgot Password? - Tamil]",
+  "loginButton": "[Login - Tamil]",
+  "loginFailedError": "[Login failed. Please check your credentials. - Tamil]",
+  "loginOrContinueWith": "[Or continue with - Tamil]",
+  "loginContinueWithGoogle": "[Continue with Google - Tamil]",
+  "loginContinueWithApple": "[Continue with Apple - Tamil]",
+  "loginDontHaveAccount": "[Don't have an account? - Tamil]",
+  "loginSignUpButton": "[Sign Up - Tamil]",
+  "loginMotivationalQuote": "[\"The only bad workout is the one that didn't happen.\" - Tamil]"
+}

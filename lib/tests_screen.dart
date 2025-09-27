@@ -1,9 +1,8 @@
 // lib/tests_screen.dart
-
 import 'package:flutter/material.dart';
 import 'test_instruction_screen.dart';
 import 'camera_screen.dart';
-import 'pose_analyzer.dart'; // Import your analyzer system
+import 'pose_analyzer.dart';
 
 // Import main screens for the bottom navigation bar
 import 'home_screen.dart';
@@ -18,6 +17,8 @@ class TestInfo {
   final PoseAnalyzer analyzer; // The specific analyzer for this test
   final List<String> rules;
   final String category; // To group tests
+  final String? demoVideoPath; // Added for demo video
+  final int? durationInSeconds; // Added for timer
 
   TestInfo({
     required this.title,
@@ -26,22 +27,19 @@ class TestInfo {
     required this.analyzer,
     required this.rules,
     required this.category,
+    this.demoVideoPath, // Added to constructor
+    this.durationInSeconds, // Added to constructor
   });
 }
 
-class TestsScreen extends StatelessWidget {
-  const TestsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // NEW: A structured list of all available tests with their specific analyzers
-    final List<TestInfo> allTests = [
+// NEW: Moved allTests to be a top-level variable
+final List<TestInfo> allTests = [
       // --- Flexibility Test ---
       TestInfo(
         category: 'Flexibility Test',
         title: 'Sit and Reach Test',
         description: 'Measure flexibility of lower back and hamstrings.',
-        imageUrl: 'https://i.imgur.com/eYn6p5A.png',
+        imageUrl: 'assests/images/sitandreach.png', // MODIFIED
         analyzer: SitAndReachAnalyzer(), // Using the placeholder analyzer
         rules: [
           'Sit on the floor with legs extended straight ahead. Shoes should be off.',
@@ -49,6 +47,8 @@ class TestsScreen extends StatelessWidget {
           'Keeping your legs straight, slowly reach forward with both hands as far as possible.',
           'Hold the position for two seconds while the distance is recorded.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
 
       // --- Strength Test ---
@@ -56,7 +56,7 @@ class TestsScreen extends StatelessWidget {
         category: 'Strength Test',
         title: 'Push-Up Test',
         description: 'Assess upper body strength and endurance.',
-        imageUrl: 'https://i.imgur.com/7aD4wwy.jpeg',
+        imageUrl: 'assests/images/pushups.png', // MODIFIED
         analyzer: PushUpAnalyzer(), // AI-powered analyzer
         rules: [
           'Start in a high plank position with hands shoulder-width apart and body in a straight line.',
@@ -64,6 +64,8 @@ class TestsScreen extends StatelessWidget {
           'Push back up to the starting position, keeping your core engaged.',
           'Perform as many repetitions as possible without breaking form.',
         ],
+        demoVideoPath: 'assests/demovideo/pushup_instruction.mp4',
+        durationInSeconds:60,
       ),
 
       // --- Power Test ---
@@ -71,7 +73,7 @@ class TestsScreen extends StatelessWidget {
         category: 'Power Test',
         title: 'Standing Broad Jump',
         description: 'Evaluate explosive leg power.',
-        imageUrl: 'https://i.imgur.com/gK2x3m0.jpeg',
+        imageUrl: 'assests/images/standingbroadjump.png', // MODIFIED
         analyzer: StandingBroadJumpAnalyzer(), // AI-powered jump detection
         rules: [
           'Stand behind a line with feet slightly apart.',
@@ -79,12 +81,14 @@ class TestsScreen extends StatelessWidget {
           'Jump as far as possible, landing on both feet without falling backwards.',
           'The distance is measured from the take-off line to the back of your heels.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
       TestInfo(
         category: 'Power Test',
         title: 'Standing Vertical Jump',
         description: 'Evaluate vertical jump height.',
-        imageUrl: 'https://i.imgur.com/9C0F1g1.jpeg',
+        imageUrl: 'assests/images/standingverticaljump.png', // MODIFIED
         analyzer: StandingVerticalJumpAnalyzer(), // AI-powered jump height estimation
         rules: [
           'Stand beside a wall and reach up to mark your standing reach.',
@@ -92,12 +96,14 @@ class TestsScreen extends StatelessWidget {
           'Touch the wall at the highest point of your jump to make a second mark.',
           'The distance between the two marks is your vertical jump height.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
       TestInfo(
         category: 'Power Test',
         title: 'Medicine Ball Throw',
         description: 'Measure upper body power.',
-        imageUrl: 'https://i.imgur.com/4J7j5d1.jpeg',
+        imageUrl: 'assests/images/medicineballthrow.png', // MODIFIED
         analyzer: MedicineBallThrowAnalyzer(), // Placeholder analyzer
         rules: [
           'Stand with your back to the throwing direction, feet shoulder-width apart.',
@@ -105,6 +111,8 @@ class TestsScreen extends StatelessWidget {
           'Squat down and then explosively extend your body upwards and backwards.',
           'Throw the ball over your head as far as possible behind you.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
 
       // --- Speed Test ---
@@ -112,7 +120,7 @@ class TestsScreen extends StatelessWidget {
         category: 'Speed Test',
         title: '30mts Standing Start',
         description: 'Measure sprinting speed over 30 meters.',
-        imageUrl: 'https://i.imgur.com/L4x2a15.jpeg',
+        imageUrl: 'assests/images/standingrun.png', // MODIFIED - Placeholder
         analyzer: SprintAnalyzer(), // Placeholder analyzer
         rules: [
           'Stand behind the starting line in a stationary position.',
@@ -120,6 +128,8 @@ class TestsScreen extends StatelessWidget {
           'Your time is recorded as you cross the 30-meter finish line.',
           'Ensure you run through the finish line at full speed.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
 
       // --- Agility Test ---
@@ -127,7 +137,7 @@ class TestsScreen extends StatelessWidget {
         category: 'Agility Test',
         title: '4*10mts Shuttle Run',
         description: 'Measure speed and agility.',
-        imageUrl: 'https://i.imgur.com/YV4i4zH.png',
+        imageUrl: 'assests/images/shuttlerun1.png', // MODIFIED - Placeholder
         analyzer: ShuttleRunAnalyzer(), // Placeholder analyzer
         rules: [
           'Place two markers 10 meters apart. Start at one marker.',
@@ -135,6 +145,8 @@ class TestsScreen extends StatelessWidget {
           'Pick up a block (or touch the line) and sprint back to the start.',
           'Repeat the process. The test is complete when you cross the starting line.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
 
       // --- Endurance Run ---
@@ -142,20 +154,22 @@ class TestsScreen extends StatelessWidget {
         category: 'Endurance Run',
         title: '800mts Run',
         description: 'Endurance run for U12 age group.',
-        imageUrl: 'https://i.imgur.com/w8q3J9M.png',
+        imageUrl: 'assests/images/800mrun.png', // MODIFIED - Placeholder
         analyzer: EnduranceRunAnalyzer(), // Placeholder analyzer
         rules: [
           'Start at the designated starting line on a 400m track.',
           'On the \'Go\' signal, begin running at a steady, sustainable pace.',
-          'Complete two full laps of the 400m track (or the full 800m distance).',
+          'Complete two full laps of the 400m track (or the full 800m distance)',
           'Your total time is recorded as you cross the finish line.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
       TestInfo(
         category: 'Endurance Run',
         title: '1.6km Run',
         description: 'Endurance run for 12+ age group.',
-        imageUrl: 'https://i.imgur.com/7S8VqVj.png',
+        imageUrl: 'assests/images/1.6km.png', // MODIFIED - Placeholder
         analyzer: EnduranceRunAnalyzer(), // Placeholder analyzer
         rules: [
           'Start at the designated starting line on a track or measured course.',
@@ -163,9 +177,16 @@ class TestsScreen extends StatelessWidget {
           'Complete four full laps of a 400m track (or the full 1.6km distance).',
           'Your total time to complete the distance is recorded as your score.',
         ],
+        demoVideoPath: null,
+        durationInSeconds: null,
       ),
     ];
 
+class TestsScreen extends StatelessWidget {
+  const TestsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     // Group tests by category
     final Map<String, List<TestInfo>> testsByCategory = {};
     for (var test in allTests) {
@@ -201,20 +222,12 @@ class TestsScreen extends StatelessWidget {
                 ...testsByCategory[category]!.map((test) {
                   return _buildTestCard(
                     context,
-                    title: test.title,
-                    description: test.description,
-                    imageUrl: test.imageUrl,
-                    nextScreen: TestInstructionScreen(
-                      testTitle: test.title,
-                      rules: test.rules,
-                      // Pass the configured CameraScreen to the instruction screen
-                      cameraScreen: CameraScreen(analyzer: test.analyzer, testName: test.title),
-                    ),
+                    test: test, // Pass the whole test object
                   );
-                }).toList(),
+                }),
               ],
             );
-          }).toList(),
+          }),
           const SizedBox(height: 20),
         ],
       ),
@@ -245,7 +258,7 @@ class TestsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTestCard(BuildContext context, {required String title, required String description, required String imageUrl, required Widget nextScreen}) {
+  Widget _buildTestCard(BuildContext context, {required TestInfo test}) {
     return Card(
       elevation: 2,
       shadowColor: Colors.black12,
@@ -254,7 +267,7 @@ class TestsScreen extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => nextScreen));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => TestInstructionScreen(testInfo: test)));
         },
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -264,16 +277,16 @@ class TestsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(test.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text(description, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                    Text(test.description, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
                     const SizedBox(height: 12), // Added space
                     OutlinedButton.icon(
                       onPressed: () {
                         // Navigate to the specific test instruction or result page
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => nextScreen),
+                          MaterialPageRoute(builder: (context) => TestInstructionScreen(testInfo: test)),
                         );
                       },
                       icon: const Icon(Icons.play_circle_outline, size: 18),
@@ -292,8 +305,8 @@ class TestsScreen extends StatelessWidget {
               const SizedBox(width: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.0),
-                child: Image.network(
-                  imageUrl,
+                child: Image.asset( // MODIFIED from Image.network
+                  test.imageUrl,
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
@@ -301,7 +314,7 @@ class TestsScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     color: Colors.grey[300],
-                    child: const Icon(Icons.image, color: Colors.grey),
+                    child: const Icon(Icons.image_not_supported, color: Colors.grey), // MODIFIED for better asset error indication
                   ),
                 ),
               ),
