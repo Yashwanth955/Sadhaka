@@ -1,0 +1,241 @@
+{
+  "cricket": {
+    "sportId": "cricket",
+    "sportName": "Cricket",
+    "icon": "sports-cricket",
+    "image": "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "thirtyMeterSprint",
+      "fiveTenFiveShuttleRun",
+      "verticalJump",
+      "pushUps",
+      "squats",
+      "reactionTest",
+      "singleLegBalance",
+      "shoulderMobility"
+    ]
+  },
+  "football": {
+    "sportId": "football",
+    "sportName": "Football",
+    "icon": "sports-soccer",
+    "image": "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "thirtyMeterSprint",
+      "fiveTenFiveShuttleRun",
+      "verticalJump",
+      "squats",
+      "singleLegBalance",
+      "reactionTest",
+      "beepTest"
+    ]
+  },
+  "hockey": {
+    "sportId": "hockey",
+    "sportName": "Hockey",
+    "icon": "sports-hockey",
+    "image": "https://images.unsplash.com/photo-1580748141549-71748dbe0bdc?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "thirtyMeterSprint",
+      "fiveTenFiveShuttleRun",
+      "lateralMovement",
+      "verticalJump",
+      "squats",
+      "reactionTest",
+      "beepTest"
+    ]
+  },
+  "badminton": {
+    "sportId": "badminton",
+    "sportName": "Badminton",
+    "icon": "sports-tennis",
+    "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "fiveTenFiveShuttleRun",
+      "lateralMovement",
+      "reactionTest",
+      "verticalJump",
+      "thirtyMeterSprint",
+      "singleLegBalance",
+      "shoulderMobility"
+    ]
+  },
+  "basketball": {
+    "sportId": "basketball",
+    "sportName": "Basketball",
+    "icon": "sports-basketball",
+    "image": "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "verticalJump",
+      "standingLongJump",
+      "thirtyMeterSprint",
+      "fiveTenFiveShuttleRun",
+      "lateralMovement",
+      "squats",
+      "reactionTest",
+      "beepTest"
+    ]
+  },
+  "volleyball": {
+    "sportId": "volleyball",
+    "sportName": "Volleyball",
+    "icon": "sports-volleyball",
+    "image": "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "verticalJump",
+      "standingLongJump",
+      "thirtyMeterSprint",
+      "lateralMovement",
+      "squats",
+      "reactionTest",
+      "shoulderMobility",
+      "singleLegBalance"
+    ]
+  },
+  "wrestling": {
+    "sportId": "wrestling",
+    "sportName": "Wrestling",
+    "icon": "sports-kabaddi",
+    "image": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "squats",
+      "pushUps",
+      "verticalJump",
+      "fiveTenFiveShuttleRun",
+      "plank",
+      "singleLegBalance",
+      "flexibilityTest",
+      "reactionTest"
+    ]
+  },
+  "boxing": {
+    "sportId": "boxing",
+    "sportName": "Boxing",
+    "icon": "sports-mma",
+    "image": "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "reactionTest",
+      "fiveTenFiveShuttleRun",
+      "pushUps",
+      "squats",
+      "plank",
+      "verticalJump"
+    ]
+  },
+  "kabaddi": {
+    "sportId": "kabaddi",
+    "sportName": "Kabaddi",
+    "icon": "groups",
+    "image": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "thirtyMeterSprint",
+      "fiveTenFiveShuttleRun",
+      "squats",
+      "verticalJump",
+      "reactionTest",
+      "singleLegBalance",
+      "plank",
+      "beepTest"
+    ]
+  },
+  "kho-kho": {
+    "sportId": "kho-kho",
+    "sportName": "Kho-Kho",
+    "icon": "directions-run",
+    "image": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": false,
+    "testIds": [
+      "thirtyMeterSprint",
+      "fiveTenFiveShuttleRun",
+      "lateralMovement",
+      "verticalJump",
+      "squats",
+      "reactionTest",
+      "singleLegBalance",
+      "beepTest"
+    ]
+  },
+  "athletics": {
+    "sportId": "athletics",
+    "sportName": "Athletics",
+    "icon": "directions-run",
+    "image": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80",
+    "hasSubEvents": true,
+    "subEvents": [
+      {
+        "id": "athletics-sprint",
+        "name": "Sprint",
+        "image": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80",
+        "testIds": [
+          "thirtyMeterSprint",
+          "verticalJump",
+          "standingLongJump",
+          "squats",
+          "reactionTest",
+          "flexibilityTest"
+        ]
+      },
+      {
+        "id": "athletics-distance",
+        "name": "Distance Running",
+        "image": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=800&q=80",
+        "testIds": [
+          "beepTest",
+          "sixHundredMeterRun",
+          "squats",
+          "plank",
+          "singleLegBalance",
+          "flexibilityTest"
+        ]
+      },
+      {
+        "id": "athletics-longjump",
+        "name": "Long Jump",
+        "image": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
+        "testIds": [
+          "thirtyMeterSprint",
+          "standingLongJump",
+          "verticalJump",
+          "squats",
+          "flexibilityTest",
+          "singleLegBalance"
+        ]
+      },
+      {
+        "id": "athletics-throwing",
+        "name": "Throwing",
+        "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
+        "testIds": [
+          "standingLongJump",
+          "pushUps",
+          "squats",
+          "shoulderMobility",
+          "plank"
+        ]
+      }
+    ],
+    "testIds": [
+      "thirtyMeterSprint",
+      "verticalJump",
+      "standingLongJump",
+      "beepTest",
+      "sixHundredMeterRun",
+      "pushUps",
+      "squats",
+      "plank",
+      "reactionTest",
+      "singleLegBalance",
+      "flexibilityTest",
+      "shoulderMobility"
+    ]
+  }
+}

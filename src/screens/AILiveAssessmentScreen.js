@@ -72,8 +72,9 @@ export default function AILiveAssessmentScreen({ navigation }) {
         <View style={styles.topOverlay}>
           <View style={styles.statusIndicator}>
             <MaterialIcons name="check-circle" size={16} color={colors.tertiaryContainer} />
-            <Text style={styles.statusText}>Athlete in Frame</Text>
+            <Text style={styles.statusText}>In Frame</Text>
           </View>
+          <Text style={styles.brandTitle}>Sadhaka</Text>
           <TouchableOpacity 
             style={styles.closeButton}
             onPress={() => navigation.goBack()}
@@ -179,6 +180,10 @@ const styles = StyleSheet.create({
     ...typography.labelBold,
     color: colors.onSurface,
     marginLeft: 4,
+  },
+  brandTitle: {
+    ...typography.brandTitle,
+    color: '#ffffff',
   },
   closeButton: {
     width: 40,

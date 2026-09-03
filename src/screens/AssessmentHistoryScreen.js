@@ -62,7 +62,7 @@ export default function AssessmentHistoryScreen({ navigation }) {
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
             <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Activity History</Text>
+          <Text style={styles.headerTitle}>Sadhaka</Text>
         </View>
       </View>
 
@@ -168,7 +168,7 @@ export default function AssessmentHistoryScreen({ navigation }) {
         
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChooseSport')}>
           <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Assess</Text>
+          <Text style={styles.navText}>Assessments</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.navItemActive}>
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     marginLeft: -8,
   },
   headerTitle: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
   },
   container: {
@@ -233,11 +233,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: colors.surfaceContainerLowest,
     minWidth: 70,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
   },
   dateBoxActive: {
     backgroundColor: colors.primaryContainer,
@@ -281,11 +276,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: colors.outlineVariant + '40',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
   },
   statLabel: {
     ...typography.labelSm,
@@ -316,11 +306,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
   },
   pdfBtnText: {
     ...typography.labelSm,
@@ -336,11 +321,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: '#e2edc4',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -417,12 +397,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(195, 197, 217, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 10,
+    borderTopColor: colors.outlineVariant,
   },
   navItem: {
     alignItems: 'center',

@@ -1,16 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
-  TextInput, SafeAreaView, ImageBackground
+  TextInput, SafeAreaView, ImageBackground, ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
-import { sportsList, getTestsForSport } from '../data/sportsData';
+import { sportsList, sportsImageMap } from '../data/sportsData';
+import { getSportsFromLocalDb } from '../services/localDb';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ChooseYourSportScreen({ navigation }) {
+  const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
+  const avatarUri = userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR;
   const [searchQuery, setSearchQuery] = useState('');
+  const [sports, setSports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSportsFromLocalDb() {
+      try {
+        const localSports = await getSportsFromLocalDb();
+        if (localSports && localSports.length > 0) {
+          setSports(localSports);
+        } else {
+          // Fallback to static data if local DB has not completed first sync yet
+          setSports(sportsList.map(s => ({ ...s, sportId: s.id, sportName: s.name, testIds: [] })));
+        }
+      } catch (err) {
+        console.warn('[ChooseYourSportScreen] Error reading sports from local SQLite:', err);
+        setSports(sportsList.map(s => ({ ...s, sportId: s.id, sportName: s.name, testIds: [] })));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSportsFromLocalDb();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -18,10 +45,10 @@ export default function ChooseYourSportScreen({ navigation }) {
         <TouchableOpacity style={styles.iconButton}>
           <MaterialIcons name="menu" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Elite Scout</Text>
-        <TouchableOpacity>
+        <Text style={styles.headerTitle}>Sadhaka</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
           <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWfGxtB6JwXqVlsJ72SzWMuQGllza0_lO1zVk4-7Q6RHw_vTJRMuK4Q_FHpcfC7A4jBJKlr6jOcgZ8IRrPeWg8GpOqbeT71t1Zbm_fMUtuBoVTYpxuKgw3fjhdYIx9WjTgH1PwRSH8_P4GVNIQqXOQ32gMWNmmu2lZ8VYstcBD4xgYvtL4sRXFV2T8rhsLnm4cUCtj9fpxbWHDHcu2eTvOodURtojf9W9hXCyT2LzZbABm-6tXyDb0' }}
+            source={{ uri: avatarUri }}
             style={styles.avatar}
           />
         </TouchableOpacity>
@@ -49,26 +76,28 @@ export default function ChooseYourSportScreen({ navigation }) {
         </View>
 
         <View style={styles.gridContainer}>
-          {sportsList
-            .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+          {sports
+            .filter(s => (s.sportName || s.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
             .map(sport => {
-              // Athletics has multiple sub-events, so we mock a larger number
-              const testCount = sport.id === 'athletics' ? 24 : getTestsForSport(sport.id).length;
+              const sId = sport.sportId || sport.id;
+              const sName = sport.sportName || sport.name;
+              const testCount = sport.testIds?.length || (sport.hasSubEvents ? 24 : 0);
+              const sportImg = sport.image || sportsImageMap[sId] || 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80';
               
               return (
               <TouchableOpacity 
-                key={sport.id} 
+                key={sId} 
                 style={styles.sportCard}
                 onPress={() => {
-                  if (sport.id === 'athletics') {
+                  if (sId === 'athletics') {
                     navigation.navigate('ChooseEvent');
                   } else {
-                    navigation.navigate('SportAssessments', { sportId: sport.id, sportName: sport.name });
+                    navigation.navigate('SportAssessments', { sportId: sId, sportName: sName, sportImage: sportImg });
                   }
                 }}
               >
                 <View style={styles.cardImageContainer}>
-                  <ImageBackground source={{ uri: sport.image }} style={styles.cardImage} imageStyle={{ opacity: 0.6 }}>
+                  <ImageBackground source={{ uri: sportImg }} style={styles.cardImage} imageStyle={{ resizeMode: 'cover' }}>
                     <View style={styles.imageOverlay} />
                     <View style={styles.testsBadge}>
                       <Text style={styles.testsBadgeText}>{testCount} Tests Available</Text>
@@ -78,9 +107,9 @@ export default function ChooseYourSportScreen({ navigation }) {
 
                 <View style={styles.cardContent}>
                   <View style={styles.cardIconWrapper}>
-                    <MaterialIcons name={sport.icon} size={24} color={colors.onPrimaryContainer} />
+                    <MaterialIcons name={sport.icon || 'fitness-center'} size={24} color={colors.onPrimaryContainer} />
                   </View>
-                  <Text style={styles.sportCardTitle}>{sport.name}</Text>
+                  <Text style={styles.sportCardTitle}>{sName}</Text>
                   
                   <View style={styles.viewAssessmentsRow}>
                     <Text style={styles.viewAssessmentsText}>View Assessments</Text>
@@ -100,7 +129,7 @@ export default function ChooseYourSportScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItemActive} onPress={() => navigation.navigate('ChooseSport')}>
           <MaterialIcons name="fitness-center" size={24} color={colors.onPrimaryContainer} />
-          <Text style={styles.navItemTextActive}>Assess</Text>
+          <Text style={styles.navItemTextActive}>Assessments</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
           <MaterialIcons name="psychology" size={24} color={colors.onSurfaceVariant} />
@@ -142,7 +171,7 @@ const styles = StyleSheet.create({
     padding: spacing.base,
   },
   headerTitle: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
   },
   avatar: {
@@ -175,11 +204,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     paddingHorizontal: 12,
     marginBottom: spacing.lg,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   searchIcon: {
     marginRight: 8,
@@ -200,11 +224,6 @@ const styles = StyleSheet.create({
     borderColor: colors.outlineVariant,
     overflow: 'hidden',
     height: 280,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 4,
   },
   cardImageContainer: {
     height: 128,
@@ -250,11 +269,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: -40, // Pull up over the image
     marginBottom: spacing.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   sportCardTitle: {
     ...typography.headlineMd,

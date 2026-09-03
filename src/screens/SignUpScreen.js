@@ -1,38 +1,56 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, TextInput, ActivityIndicator
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import colors from '../theme/colors';
-import typography from '../theme/typography';
-import { spacing, borderRadius } from '../theme/spacing';
-import PrimaryButton from '../components/PrimaryButton';
-import InputField from '../components/InputField';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function SignUpScreen({ navigation }) {
-  const [role, setRole] = useState('athlete');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signup } = useAuth();
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const { signup, loginWithGoogle } = useAuth();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSignUp = async () => {
-    if (!email || !password || !fullName) {
-      return setError('Please fill in all fields');
+    if (!email || !password) {
+      return setError('Please enter your email and password');
     }
+    if (password !== confirmPassword) {
+      return setError('Passwords do not match');
+    }
+    if (password.length < 6) {
+      return setError('Password must be at least 6 characters');
+    }
+
     try {
       setError('');
       setLoading(true);
-      await signup(email, password, fullName, role);
-      navigation.navigate('OnboardingCarousel');
+      await signup(email.trim(), password, fullName.trim() || 'Athlete', 'athlete');
+      navigation.navigate('BasicDetails');
     } catch (err) {
-      setError('Failed to create an account. ' + err.message);
+      setError('Failed to create account: ' + err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      setError('');
+      setGoogleLoading(true);
+      await loginWithGoogle();
+      navigation.navigate('BasicDetails');
+    } catch (err) {
+      setError('Google sign-up error: ' + err.message);
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -45,105 +63,131 @@ export default function SignUpScreen({ navigation }) {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Brand Header */}
-        <View style={styles.header}>
-          <Text style={styles.brandName}>Sadhaka</Text>
-          <Text style={styles.tagline}>Prepare to elevate your game.</Text>
+        {/* App Header with Back Arrow */}
+        <View style={styles.headerBar}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <MaterialIcons name="arrow-back" size={24} color="#111816" />
+          </TouchableOpacity>
+          <Text style={styles.brandTitle}>Sadhaka</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        {/* Form Card with Active Bar */}
-        <View style={styles.formCard}>
-          {/* Active bar accent */}
-          <View style={styles.activeBar} />
+        <View style={styles.innerContent}>
+          <Text style={styles.headingTitle}>Create Your Account</Text>
+          <Text style={styles.headingSubtitle}>Join the sports talent assessment platform</Text>
 
-          <Text style={styles.formTitle}>Create Account</Text>
-
-          {/* Role Selection Chips */}
-          <View style={styles.roleRow}>
-            <TouchableOpacity
-              style={[styles.roleChip, role === 'athlete' && styles.roleChipActive]}
-              onPress={() => setRole('athlete')}
-            >
-              <Text style={[styles.roleText, role === 'athlete' && styles.roleTextActive]}>
-                Athlete
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.roleChip, role === 'scout' && styles.roleChipActive]}
-              onPress={() => setRole('scout')}
-            >
-              <Text style={[styles.roleText, role === 'scout' && styles.roleTextActive]}>
-                Scout / Coach
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
 
           {/* Full Name */}
-          <InputField
-            label="Full Name"
-            placeholder="Alex Rivers"
-            value={fullName}
-            onChangeText={setFullName}
-            icon="person"
-            autoCapitalize="words"
-          />
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Full Name</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="person-outline" size={20} color="#61897c" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your full name"
+                placeholderTextColor="#61897c"
+                value={fullName}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+              />
+            </View>
+          </View>
 
           {/* Email */}
-          <InputField
-            label="Email Address"
-            placeholder="alex@elitescout.io"
-            value={email}
-            onChangeText={setEmail}
-            icon="mail"
-            keyboardType="email-address"
-          />
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="mail-outline" size={20} color="#61897c" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your email"
+                placeholderTextColor="#61897c"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
 
           {/* Password */}
-          <InputField
-            label="Password"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            icon="lock"
-            secureTextEntry
-          />
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="lock-outline" size={20} color="#61897c" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your password (min 6 chars)"
+                placeholderTextColor="#61897c"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                <MaterialIcons name={showPassword ? 'visibility' : 'visibility-off'} size={20} color="#61897c" />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {/* Confirm Password */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Confirm Password</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="lock-outline" size={20} color="#61897c" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Confirm your password"
+                placeholderTextColor="#61897c"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showPassword}
+              />
+            </View>
+          </View>
 
-          {/* Sign Up Button */}
-          <PrimaryButton
-            title={loading ? "Creating Account..." : "Sign Up"}
-            icon={loading ? null : "arrow-forward"}
+          {/* Primary Sign Up Button */}
+          <TouchableOpacity 
+            style={[styles.primaryButton, loading && styles.disabledButton]}
             onPress={handleSignUp}
-            style={styles.signUpButton}
             disabled={loading}
-          />
+          >
+            {loading ? (
+              <ActivityIndicator color="#111816" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Sign Up</Text>
+            )}
+          </TouchableOpacity>
 
           {/* Divider */}
-          <View style={styles.divider}>
+          <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+            <Text style={styles.dividerText}>OR</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social Buttons */}
-          <View style={styles.socialRow}>
-            <TouchableOpacity style={styles.socialButton}>
-              <MaterialIcons name="g-translate" size={20} color="#DB4437" />
-              <Text style={styles.socialText}>Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <MaterialIcons name="apple" size={20} color={colors.onSurface} />
-              <Text style={styles.socialText}>Apple</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          {/* Google Sign Up Button */}
+          <TouchableOpacity 
+            style={[styles.googleButton, googleLoading && styles.disabledButton]}
+            onPress={handleGoogleSignUp}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#111816" />
+            ) : (
+              <>
+                <FontAwesome name="google" size={18} color="#EA4335" style={styles.googleIcon} />
+                <Text style={styles.googleButtonText}>Sign Up with Google</Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-        {/* Login Link */}
-        <View style={styles.loginPrompt}>
-          <Text style={styles.loginText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.loginLink}>Log In</Text>
+          {/* Sign In Link */}
+          <TouchableOpacity 
+            style={styles.signInLinkRow}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.signInLinkText}>Already have an account? <Text style={styles.signInBoldText}>Sign In</Text></Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -154,136 +198,155 @@ export default function SignUpScreen({ navigation }) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#ffffff',
   },
   container: {
     flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
-    paddingHorizontal: spacing.marginMobile,
-    paddingVertical: spacing.lg,
+    alignItems: 'flex-start',
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  brandName: {
-    ...typography.displayLg,
-    color: colors.primary,
-    letterSpacing: -1,
-  },
-  tagline: {
-    ...typography.bodyLg,
-    color: colors.onSurfaceVariant,
-    marginTop: spacing.sm,
-  },
-  formCard: {
-    backgroundColor: colors.surfaceContainerLowest + 'CC',
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant + '4D',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 5,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  activeBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    backgroundColor: colors.primary,
-  },
-  formTitle: {
-    ...typography.headlineLgMobile,
-    color: colors.onSurface,
-    marginBottom: spacing.md,
-  },
-  roleRow: {
-    flexDirection: 'row',
-    gap: spacing.gutter,
-    marginBottom: spacing.md,
-  },
-  roleChip: {
+  brandTitle: {
+    fontFamily: 'Montserrat_800ExtraBold',
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111816',
     flex: 1,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: borderRadius.default,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
-  roleChipActive: {
-    backgroundColor: colors.surfaceContainer,
-    borderColor: colors.primary,
+  headerSpacer: {
+    width: 44,
   },
-  roleText: {
-    ...typography.labelBold,
-    color: colors.onSurfaceVariant,
+  innerContent: {
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+    marginTop: 8,
   },
-  roleTextActive: {
-    color: colors.primary,
+  headingTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111816',
+    textAlign: 'center',
+    marginBottom: 4,
   },
-  signUpButton: {
-    marginTop: spacing.lg,
+  headingSubtitle: {
+    fontSize: 14,
+    color: '#61897c',
+    textAlign: 'center',
+    marginBottom: 20,
   },
-  divider: {
+  errorBanner: {
+    backgroundColor: '#fee2e2',
+    color: '#b91c1c',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    textAlign: 'center',
+    fontSize: 13,
+  },
+  inputContainer: {
+    marginBottom: 14,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111816',
+    marginBottom: 6,
+  },
+  inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginVertical: spacing.md,
+    backgroundColor: '#f0f4f3',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 54,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#111816',
+  },
+  eyeButton: {
+    padding: 6,
+  },
+  primaryButton: {
+    backgroundColor: '#13eca4',
+    height: 50,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111816',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.outlineVariant + '80',
+    backgroundColor: '#e5e7eb',
   },
   dividerText: {
-    ...typography.labelSm,
-    color: colors.onSurfaceVariant,
+    marginHorizontal: 12,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9ca3af',
   },
-  socialRow: {
-    flexDirection: 'row',
-    gap: spacing.gutter,
-  },
-  socialButton: {
-    flex: 1,
+  googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: borderRadius.default,
-    backgroundColor: colors.surface,
+    height: 50,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#ffffff',
   },
-  socialText: {
-    ...typography.labelBold,
-    color: colors.onSurface,
+  googleIcon: {
+    marginRight: 10,
   },
-  loginPrompt: {
-    flexDirection: 'row',
+  googleButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111816',
+  },
+  signInLinkRow: {
+    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.lg,
+    paddingVertical: 18,
   },
-  loginText: {
-    ...typography.bodyMd,
-    color: colors.onSurfaceVariant,
+  signInLinkText: {
+    fontSize: 14,
+    color: '#61897c',
   },
-  loginLink: {
-    ...typography.bodyMd,
-    color: colors.primary,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  errorText: {
-    ...typography.labelSm,
-    color: colors.error,
-    marginTop: spacing.md,
-    textAlign: 'center',
+  signInBoldText: {
+    fontWeight: '700',
+    color: '#111816',
+    textDecorationLine: 'underline',
   },
 });

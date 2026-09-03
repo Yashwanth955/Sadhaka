@@ -1,11 +1,207 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  Image 
+} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing } from '../theme/spacing';
+import testDefinitionsData from '../data/testDefinitionsData.json';
+import { getTestById } from '../services/localDb';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-export default function TestInstructionsScreen({ navigation }) {
+const titleToKeyMap = {
+  '50m sprint': 'fiftyMeterSprint',
+  '50m sprint (standing start)': 'fiftyMeterSprint',
+  '30m sprint': 'thirtyMeterSprint',
+  '30 m sprint': 'thirtyMeterSprint',
+  '5-10-5 shuttle run': 'fiveTenFiveShuttleRun',
+  'shuttle run': 'fiveTenFiveShuttleRun',
+  'vertical jump': 'verticalJump',
+  'standing long jump': 'standingLongJump',
+  'push-ups': 'pushUps',
+  'push ups': 'pushUps',
+  'squats': 'squats',
+  'reaction test': 'reactionTest',
+  'plate tapping / reaction test': 'reactionTest',
+  'single-leg balance': 'singleLegBalance',
+  'flamingo balance test': 'singleLegBalance',
+  'shoulder mobility': 'shoulderMobility',
+  'lateral movement': 'lateralMovement',
+  'beep test': 'beepTest',
+  'plank': 'plank',
+  'flexibility test': 'flexibilityTest',
+  'sit and reach test': 'flexibilityTest',
+  'partial curl-up test': 'partialCurlUp',
+  'partial curl-up': 'partialCurlUp',
+  'bmi test': 'bmiTest',
+  'bmi test (body composition)': 'bmiTest',
+  '600m run/walk': 'sixHundredMeterRun',
+  '600m run': 'sixHundredMeterRun',
+};
+
+function resolveTestDefinition(params = {}) {
+  const { testId, testName } = params;
+
+  if (testId && testDefinitionsData[testId]) {
+    return testDefinitionsData[testId];
+  }
+
+  const lookupKey = titleToKeyMap[(testName || testId || '').toLowerCase()];
+  if (lookupKey && testDefinitionsData[lookupKey]) {
+    return testDefinitionsData[lookupKey];
+  }
+
+  const matched = Object.values(testDefinitionsData).find(
+    t => t.name.toLowerCase() === (testName || '').toLowerCase()
+  );
+  if (matched) return matched;
+
+  return testDefinitionsData.fiftyMeterSprint || testDefinitionsData.thirtyMeterSprint;
+}
+
+export default function TestInstructionsScreen({ route, navigation }) {
+  const { currentUser, userProfile } = useAuth() || {};
+  const initialGender = (
+    userProfile?.gender || 
+    currentUser?.gender || 
+    route?.params?.gender || 
+    'male'
+  ).toLowerCase() === 'female' ? 'female' : 'male';
+
+  const [athleteGender, setAthleteGender] = useState(initialGender);
+  const initialTest = resolveTestDefinition(route?.params);
+  const [testData, setTestData] = useState(initialTest);
+
+  useEffect(() => {
+    async function loadAthleteGender() {
+      if (userProfile?.gender) {
+        setAthleteGender(userProfile.gender.toLowerCase() === 'female' ? 'female' : 'male');
+        return;
+      }
+      if (currentUser?.uid && db) {
+        try {
+          const docRef = doc(db, 'users', currentUser.uid);
+          const snap = await getDoc(docRef);
+          if (snap.exists() && snap.data().gender) {
+            setAthleteGender(snap.data().gender.toLowerCase() === 'female' ? 'female' : 'male');
+          }
+        } catch (e) {}
+      }
+    }
+    loadAthleteGender();
+  }, [currentUser, userProfile]);
+
+  useEffect(() => {
+    async function loadTestFromDb() {
+      const incomingId = route?.params?.testId;
+      if (incomingId) {
+        try {
+          const dbTest = await getTestById(incomingId);
+          if (dbTest) {
+            setTestData(dbTest);
+          }
+        } catch (e) {
+          console.warn('[TestInstructionsScreen] Error loading test from SQLite:', e);
+        }
+      }
+    }
+    loadTestFromDb();
+  }, [route?.params?.testId]);
+
+  const instructionSteps = (testData.instructions || '')
+    .split('\n')
+    .filter(line => line.trim().length > 0)
+    .map(line => line.replace(/^\d+\.\s*/, ''));
+
+  const getStatusBadgeConfig = (status) => {
+    switch (status) {
+      case 'full_ai':
+        return {
+          label: 'FULL AI TRACKED',
+          bgColor: '#E8F5E9',
+          textColor: '#2E7D32',
+          borderColor: '#A5D6A7',
+          icon: 'auto-awesome'
+        };
+      case 'basic_manual':
+        return {
+          label: 'BASIC MANUAL / TIMER',
+          bgColor: '#E3F2FD',
+          textColor: '#1565C0',
+          borderColor: '#90CAF9',
+          icon: 'touch-app'
+        };
+      case 'coming_soon':
+        return {
+          label: 'COMING SOON',
+          bgColor: '#FFF3E0',
+          textColor: '#E65100',
+          borderColor: '#FFCC80',
+          icon: 'hourglass-empty'
+        };
+      default:
+        return {
+          label: 'FULL AI TRACKED',
+          bgColor: '#E8F5E9',
+          textColor: '#2E7D32',
+          borderColor: '#A5D6A7',
+          icon: 'auto-awesome'
+        };
+    }
+  };
+
+  const statusConfig = getStatusBadgeConfig(testData.implementationStatus);
+  const isComingSoon = testData.implementationStatus === 'coming_soon';
+
+  const formatGenderBenchmark = (t, gender) => {
+    if (!t) return null;
+    const fallback = testDefinitionsData[t.id] || {};
+    const unit = t.benchmarkUnit || fallback.benchmarkUnit || '';
+    const isLower = (t.benchmarkDirection || fallback.benchmarkDirection) === 'lower_is_better';
+    const isFalls = (t.detectionMethod || fallback.detectionMethod) === 'fall_count_fixed';
+    const isFemale = gender === 'female';
+
+    let exVal = isFemale 
+      ? (t.benchmarkExcellentFemale ?? t.benchmarkExcellent)
+      : (t.benchmarkExcellentMale ?? t.benchmarkExcellent);
+
+    let gdVal = isFemale
+      ? (t.benchmarkGoodFemale ?? t.benchmarkGood)
+      : (t.benchmarkGoodMale ?? t.benchmarkGood);
+
+    let avgVal = isFemale
+      ? (t.benchmarkAverageFemale ?? t.benchmarkAverage)
+      : (t.benchmarkAverageMale ?? t.benchmarkAverage);
+
+    if ((exVal === undefined || exVal === null || (exVal === 0 && !isFalls)) && fallback) {
+      exVal = isFemale ? fallback.benchmarkExcellentFemale : fallback.benchmarkExcellentMale;
+      gdVal = isFemale ? fallback.benchmarkGoodFemale : fallback.benchmarkGoodMale;
+      avgVal = isFemale ? fallback.benchmarkAverageFemale : fallback.benchmarkAverageMale;
+    }
+
+    if (exVal === undefined || exVal === null) return null;
+
+    const prefixEx = isLower || isFalls ? '<=' : '>=';
+    const prefixAvg = isLower || isFalls ? '>' : '<';
+
+    return {
+      excellent: `${prefixEx} ${exVal} ${unit}`.trim(),
+      good: `${gdVal} ${unit}`.trim(),
+      average: `${prefixAvg} ${avgVal} ${unit}`.trim(),
+    };
+  };
+
+  const benchmarkObj = formatGenderBenchmark(testData, athleteGender);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
@@ -13,15 +209,16 @@ export default function TestInstructionsScreen({ navigation }) {
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>100m Sprint Instructions</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>Sadhaka</Text>
         <View style={styles.spacer} />
       </View>
 
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Video Demo Section */}
+        
+        {/* Video Demo & Category Banner */}
         <TouchableOpacity style={styles.videoContainer}>
           <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCV-Qb7ZF6PE6VK-ErCnEcXpZJisHgWPGozVTjqOdq7p3D02F2rVgxXhCSO_Nux_lvcUdVeb7oFEvFy7CfGeVO7nVp9YFv9qP64nBEbcS3YwqHMDGEUscWJv8EXmxqCnnCbGSyCdo1nguJCiXnq0NIJTtIfmKcjZjgrhildynovsOVYBqpkWTx5jnOv_7LlwQ3zqcc_kJGM6oNw0fXEQ-f3H6H7N7-9vNZdIju37lm1IS0csn3XVU8x' }}
+            source={{ uri: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' }}
             style={styles.videoThumbnail}
           />
           <View style={styles.videoOverlay}>
@@ -35,67 +232,144 @@ export default function TestInstructionsScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* How it Works */}
+        {/* Status & Mode Banner */}
+        <View style={[styles.statusBanner, { backgroundColor: statusConfig.bgColor, borderColor: statusConfig.borderColor }]}>
+          <View style={styles.statusBannerLeft}>
+            <MaterialIcons name={statusConfig.icon} size={20} color={statusConfig.textColor} />
+            <Text style={[styles.statusBannerLabel, { color: statusConfig.textColor }]}>{statusConfig.label}</Text>
+          </View>
+          <Text style={[styles.statusBannerNote, { color: statusConfig.textColor }]}>{testData.statusNote}</Text>
+        </View>
+
+        {/* Overview & Category Badge Card */}
+        <View style={styles.card}>
+          <View style={styles.cardLeftBorder} />
+          <View style={styles.categoryRow}>
+            <View style={styles.categoryPill}>
+              <Text style={styles.categoryPillText}>{testData.category?.toUpperCase()}</Text>
+            </View>
+            <View style={styles.detectionPill}>
+              <MaterialIcons name="settings-suggest" size={14} color={colors.primary} />
+              <Text style={styles.detectionPillText}>{testData.detectionMethod}</Text>
+            </View>
+            {testData.fixedDuration && (
+              <View style={[styles.detectionPill, { backgroundColor: colors.primaryContainer }]}>
+                <MaterialIcons name="timer" size={14} color={colors.onPrimaryContainer} />
+                <Text style={[styles.detectionPillText, { color: colors.onPrimaryContainer }]}>{testData.fixedDuration}s Window</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.testNameHeading}>{testData.name}</Text>
+          <Text style={styles.shortDescriptionText}>{testData.shortDescription}</Text>
+          {testData.sourceReference && (
+            <Text style={styles.sourceText}>Source: {testData.sourceReference}</Text>
+          )}
+        </View>
+
+        {/* Why It Matters Card */}
+        {testData.whyItMatters && (
+          <View style={styles.card}>
+            <View style={[styles.cardLeftBorder, { backgroundColor: '#FF9800' }]} />
+            <View style={styles.cardHeader}>
+              <MaterialIcons name="psychology" size={24} color="#FF9800" />
+              <Text style={styles.cardTitle}>Why It Matters</Text>
+            </View>
+            <Text style={styles.bodyText}>{testData.whyItMatters}</Text>
+          </View>
+        )}
+
+        {/* Step-by-Step Instructions */}
         <View style={styles.card}>
           <View style={styles.cardLeftBorder} />
           <View style={styles.cardHeader}>
             <MaterialIcons name="format-list-numbered" size={24} color={colors.primary} />
-            <Text style={styles.cardTitle}>How it Works</Text>
+            <Text style={styles.cardTitle}>Step-by-Step Setup & Instructions</Text>
           </View>
           
           <View style={styles.stepsContainer}>
-            {/* Steps Line */}
             <View style={styles.stepsLine} />
-            
-            <View style={styles.stepRow}>
-              <View style={styles.stepNumber}><Text style={styles.stepNumberText}>1</Text></View>
-              <Text style={styles.stepText}>Position your phone 5 meters away on a stable surface.</Text>
-            </View>
-            <View style={styles.stepRow}>
-              <View style={styles.stepNumber}><Text style={styles.stepNumberText}>2</Text></View>
-              <Text style={styles.stepText}>Ensure your full body is visible in the frame.</Text>
-            </View>
-            <View style={styles.stepRow}>
-              <View style={styles.stepNumber}><Text style={styles.stepNumberText}>3</Text></View>
-              <Text style={styles.stepText}>Wait for the 3-second countdown after pressing start.</Text>
-            </View>
-            <View style={styles.stepRow}>
-              <View style={styles.stepNumber}><Text style={styles.stepNumberText}>4</Text></View>
-              <Text style={styles.stepText}>Sprint at maximum effort until you cross the finish line.</Text>
-            </View>
+            {instructionSteps.map((step, idx) => (
+              <View key={idx} style={styles.stepRow}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>{idx + 1}</Text>
+                </View>
+                <Text style={styles.stepText}>{step}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
-        {/* Critical Rules */}
-        <View style={styles.rulesCard}>
-          <View style={styles.cardHeader}>
-            <MaterialIcons name="warning" size={24} color={colors.error} />
-            <Text style={styles.cardTitle}>Critical Rules</Text>
+        {/* Target Benchmarks Card */}
+        {benchmarkObj && (
+          <View style={styles.card}>
+            <View style={[styles.cardLeftBorder, { backgroundColor: colors.amber }]} />
+            <View style={styles.benchmarkHeaderRow}>
+              <View style={styles.cardHeader}>
+                <MaterialIcons name="emoji-events" size={24} color={colors.amber} />
+                <Text style={styles.cardTitle}>Target Benchmarks</Text>
+              </View>
+
+              {/* Profile Gender Badge */}
+              <View style={styles.profileGenderBadge}>
+                <MaterialIcons 
+                  name={athleteGender === 'female' ? 'female' : 'male'} 
+                  size={16} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.profileGenderBadgeText}>
+                  {athleteGender === 'female' ? 'Girls Benchmark' : 'Boys Benchmark'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.benchmarkContainer}>
+              <View style={[styles.benchmarkRow, { backgroundColor: colors.success + '18' }]}>
+                <View style={styles.benchmarkLabelGroup}>
+                  <MaterialIcons name="star" size={18} color={colors.success} />
+                  <Text style={[styles.benchmarkLabel, { color: colors.success }]}>EXCELLENT</Text>
+                </View>
+                <Text style={[styles.benchmarkValue, { color: colors.success }]}>{benchmarkObj.excellent}</Text>
+              </View>
+
+              <View style={[styles.benchmarkRow, { backgroundColor: colors.primary + '18' }]}>
+                <View style={styles.benchmarkLabelGroup}>
+                  <MaterialIcons name="thumb-up" size={18} color={colors.primary} />
+                  <Text style={[styles.benchmarkLabel, { color: colors.primary }]}>GOOD</Text>
+                </View>
+                <Text style={[styles.benchmarkValue, { color: colors.primary }]}>{benchmarkObj.good}</Text>
+              </View>
+
+              <View style={[styles.benchmarkRow, { backgroundColor: colors.amber + '18' }]}>
+                <View style={styles.benchmarkLabelGroup}>
+                  <MaterialIcons name="remove" size={18} color={colors.amber} />
+                  <Text style={[styles.benchmarkLabel, { color: colors.amber }]}>AVERAGE</Text>
+                </View>
+                <Text style={[styles.benchmarkValue, { color: colors.amber }]}>{benchmarkObj.average}</Text>
+              </View>
+            </View>
           </View>
-          
-          <View style={styles.ruleItem}>
-            <MaterialIcons name="check-circle" size={20} color={colors.primary} />
-            <Text style={styles.ruleText}>Wear form-fitting athletic clothes</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <MaterialIcons name="check-circle" size={20} color={colors.primary} />
-            <Text style={styles.ruleText}>Ensure high-contrast lighting</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <MaterialIcons name="check-circle" size={20} color={colors.primary} />
-            <Text style={styles.ruleText}>Maintain clear space for 100m</Text>
-          </View>
-        </View>
+        )}
+
       </ScrollView>
 
       {/* Bottom Action Area */}
       <View style={styles.bottomActionArea}>
         <TouchableOpacity 
-          style={styles.readyButton}
-          onPress={() => navigation.navigate('AILiveAssessment')}
+          style={[styles.readyButton, isComingSoon && styles.disabledButton]}
+          disabled={isComingSoon}
+          onPress={() => navigation.navigate('AILiveAssessment', { 
+            testId: testData.id, 
+            testName: testData.name,
+            detectionMethod: testData.detectionMethod,
+            implementationStatus: testData.implementationStatus,
+            gender: athleteGender
+          })}
         >
-          <Text style={styles.readyButtonText}>I'm Ready, Start Test</Text>
-          <MaterialIcons name="arrow-forward" size={24} color={colors.onPrimary} />
+          <Text style={[styles.readyButtonText, isComingSoon && styles.disabledButtonText]}>
+            {isComingSoon ? 'Coming Soon' : "I'm Ready, Start Test"}
+          </Text>
+          {!isComingSoon && <MaterialIcons name="arrow-forward" size={24} color={colors.onPrimary} />}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -126,20 +400,19 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   headerTitle: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: 48,
+    right: 48,
     textAlign: 'center',
-    zIndex: -1,
   },
   spacer: {
     width: 40,
   },
   container: {
     padding: spacing.marginMobile,
-    paddingBottom: 120, // Space for bottom action area
+    paddingBottom: 120,
   },
   videoContainer: {
     width: '100%',
@@ -157,7 +430,7 @@ const styles = StyleSheet.create({
   },
   videoOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -165,14 +438,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   demoBadge: {
     position: 'absolute',
@@ -180,7 +448,7 @@ const styles = StyleSheet.create({
     left: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -190,18 +458,35 @@ const styles = StyleSheet.create({
     color: colors.onSurface,
     marginLeft: 8,
   },
+  statusBanner: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+    gap: 4,
+  },
+  statusBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusBannerLabel: {
+    ...typography.labelBold,
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+  statusBannerNote: {
+    ...typography.bodyMd,
+    fontSize: 13,
+    marginLeft: 28,
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(195, 197, 217, 0.3)', // outline-variant/30
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-    marginBottom: spacing.sm,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -213,15 +498,89 @@ const styles = StyleSheet.create({
     width: 4,
     backgroundColor: colors.primary,
   },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  categoryPill: {
+    backgroundColor: colors.primaryContainer,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  categoryPillText: {
+    ...typography.labelBold,
+    color: colors.onPrimaryContainer,
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  detectionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceContainerHighest,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  detectionPillText: {
+    ...typography.labelSm,
+    color: colors.onSurfaceVariant,
+    fontSize: 11,
+  },
+  testNameHeading: {
+    ...typography.headlineLgMobile,
+    fontSize: 22,
+    color: colors.onSurface,
+    marginBottom: 6,
+  },
+  shortDescriptionText: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  sourceText: {
+    ...typography.labelSm,
+    color: colors.primary,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+  },
+  benchmarkHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
   cardTitle: {
     ...typography.headlineMd,
     color: colors.onSurface,
     marginLeft: 8,
+  },
+  profileGenderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primaryContainer,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  profileGenderBadgeText: {
+    ...typography.labelBold,
+    fontSize: 12,
+    color: colors.primary,
+  },
+  bodyText: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
+    lineHeight: 22,
   },
   stepsContainer: {
     position: 'relative',
@@ -232,12 +591,12 @@ const styles = StyleSheet.create({
     top: 24,
     bottom: 16,
     width: 2,
-    backgroundColor: 'rgba(195, 197, 217, 0.5)',
+    backgroundColor: colors.border,
   },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   stepNumber: {
     width: 24,
@@ -259,38 +618,43 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     flex: 1,
     marginTop: 2,
+    lineHeight: 20,
   },
-  rulesCard: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: 12,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(195, 197, 217, 0.3)',
+  benchmarkContainer: {
+    gap: 8,
+    marginTop: 4,
   },
-  ruleItem: {
+  benchmarkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(195, 197, 217, 0.2)',
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
-  ruleText: {
-    ...typography.bodyMd,
-    color: colors.onSurfaceVariant,
-    marginLeft: 12,
-    flex: 1,
+  benchmarkLabelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  benchmarkLabel: {
+    ...typography.labelBold,
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+  benchmarkValue: {
+    ...typography.headlineMd,
+    fontSize: 15,
+    fontWeight: '700',
   },
   bottomActionArea: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(248, 249, 255, 0.9)', // surface/90
+    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(195, 197, 217, 0.3)',
+    borderTopColor: colors.border,
     paddingHorizontal: spacing.marginMobile,
     paddingVertical: spacing.sm,
   },
@@ -302,10 +666,17 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
   },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+  },
   readyButtonText: {
     ...typography.headlineMd,
     fontSize: 18,
     color: colors.onPrimary,
     marginRight: 12,
+  },
+  disabledButtonText: {
+    color: '#666666',
+    marginRight: 0,
   },
 });

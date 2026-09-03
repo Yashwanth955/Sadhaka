@@ -40,3 +40,16 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# SQLite & Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+sports_ai.db
+
+# Scratch & Stitch temporary artifacts
+scratch/
+stitch/
+.stitch/
+

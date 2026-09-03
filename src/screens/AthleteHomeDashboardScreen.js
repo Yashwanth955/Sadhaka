@@ -13,7 +13,7 @@ import { db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export default function AthleteHomeDashboardScreen({ navigation }) {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
         <Text style={styles.headerTitle}>Sadhaka</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
           <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWfGxtB6JwXqVlsJ72SzWMuQGllza0_lO1zVk4-7Q6RHw_vTJRMuK4Q_FHpcfC7A4jBJKlr6jOcgZ8IRrPeWg8GpOqbeT71t1Zbm_fMUtuBoVTYpxuKgw3fjhdYIx9WjTgH1PwRSH8_P4GVNIQqXOQ32gMWNmmu2lZ8VYstcBD4xgYvtL4sRXFV2T8rhsLnm4cUCtj9fpxbWHDHcu2eTvOodURtojf9W9hXCyT2LzZbABm-6tXyDb0' }}
+            source={{ uri: userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR }}
             style={styles.avatar}
           />
         </TouchableOpacity>
@@ -160,7 +160,7 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
         {/* Progress Chart Mock */}
         <TouchableOpacity 
           style={styles.progressCard}
-          onPress={() => navigation.navigate('OverallProgressDashboard')}
+          onPress={() => navigation.navigate('OverallProgress')}
         >
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
@@ -193,9 +193,9 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChooseSport')}>
           <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Assess</Text>
+          <Text style={styles.navItemText}>Assessments</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgressDashboard')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
           <MaterialIcons name="psychology" size={24} color={colors.onSurfaceVariant} />
           <Text style={styles.navItemText}>Insights</Text>
         </TouchableOpacity>
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     padding: spacing.base,
   },
   headerTitle: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
   },
   avatar: {

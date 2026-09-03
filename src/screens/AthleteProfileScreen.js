@@ -12,8 +12,13 @@ import { db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export default function AthleteProfileScreen({ navigation }) {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userProfile, logout, DEFAULT_ATHLETE_AVATAR } = useAuth();
   const [userData, setUserData] = useState(null);
+
+  const avatarUri = userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR;
+  const displayWeight = userData?.weight || userProfile?.weight || 64;
+  const displayHeight = userData?.height || userProfile?.height || 172;
+  const displaySport = userData?.primarySport || userProfile?.primarySport || 'Cricket';
 
   useEffect(() => {
     async function fetchUserData() {
@@ -33,10 +38,10 @@ export default function AthleteProfileScreen({ navigation }) {
   }, [currentUser]);
 
   const getAge = (dobString) => {
-    if (!dobString) return '--';
+    if (!dobString) return '18';
     const today = new Date();
     const birthDate = new Date(dobString);
-    if (isNaN(birthDate.getTime())) return '--';
+    if (isNaN(birthDate.getTime())) return '18';
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
@@ -59,7 +64,7 @@ export default function AthleteProfileScreen({ navigation }) {
         <Text style={styles.headerTitle}>Sadhaka</Text>
         <TouchableOpacity>
           <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdBSvOrpQh_SQel4FPwRzvZB0fEaP15Oz8t_-NUjnRpZ6YCqQqnMhAy6EJs54opNt_H2ee-ve41JjaU8eehOffQ-awPcpbTE2fdyTkiJe4GCDAW9d89bHgb3mMEdmmX8Ax1NGUm1ecV0eZ-RweKtlR9_jhOFyPBYlhKfxYNp_aAfAtpBNQzGc89ld4F1NMofLNhuIlbGF0SaalzKyTxbtdkc5Mmc3TcoaEjgwAEokWjYqGA2tmkoyR' }}
+            source={{ uri: avatarUri }}
             style={styles.avatar}
           />
         </TouchableOpacity>
@@ -74,37 +79,37 @@ export default function AthleteProfileScreen({ navigation }) {
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAoH-XosX0XzpzC5vJ2jgaoURyBaEsqs95APgUqr17_tBxeTpGnQ3VEw-YwBm8b2KtkThtvUxNTDQaJzzA34c7tTrRarpLImJH97QXf4iiLvYZa_uue10NCMMkCdYlPCGpxhJ3GzTaGkAM-lEeNWNYRj1aTk_6Q_EGqUAeLc-rduYt2MVTN0NdVUdpRKriYexpXC4f_tRfNf3QXHd3USZAXDJOdnv9qC7_G-IrWhw2L56Mul_x6pnIw' }}
+              source={{ uri: avatarUri }}
               style={styles.profileImage}
             />
           </View>
           
-          <Text style={styles.profileName}>{userData?.fullName?.split(' ')[0] || currentUser?.displayName?.split(' ')[0] || 'Athlete'} 👋</Text>
+          <Text style={styles.profileName}>{userData?.fullName?.split(' ')[0] || userProfile?.fullName?.split(' ')[0] || currentUser?.displayName?.split(' ')[0] || 'Athlete'} 👋</Text>
           <View style={styles.badgeContainer}>
             <MaterialIcons name="star" size={16} color={colors.primary} />
             <Text style={styles.badgeText}>Elite Tier</Text>
           </View>
 
-          <Text style={styles.bioText}>Aspiring Sprinter | Focused on explosive power and speed.</Text>
+          <Text style={styles.bioText}>Aspiring Athlete | {displaySport} Focus | Verified Performance Profile</Text>
         </View>
 
         {/* Quick Stats Grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>AGE</Text>
-            <Text style={styles.statValue}>{getAge(userData?.dob)}</Text>
+            <Text style={styles.statValue}>{getAge(userData?.dob || userProfile?.dob)}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>HEIGHT</Text>
-            <Text style={styles.statValue}>{userData?.height || '--'}<Text style={styles.statUnit}>cm</Text></Text>
+            <Text style={styles.statValue}>{displayHeight}<Text style={styles.statUnit}>cm</Text></Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>WEIGHT</Text>
-            <Text style={styles.statValue}>{userData?.weight || '--'}<Text style={styles.statUnit}>kg</Text></Text>
+            <Text style={styles.statValue}>{displayWeight}<Text style={styles.statUnit}>kg</Text></Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>PRIMARY</Text>
-            <Text style={styles.statValue}>{userData?.primarySport || 'N/A'}</Text>
+            <Text style={styles.statValue}>{displaySport}</Text>
           </View>
         </View>
 
@@ -217,7 +222,7 @@ export default function AthleteProfileScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChooseSport')}>
           <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Assess</Text>
+          <Text style={styles.navItemText}>Assessments</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
           <MaterialIcons name="analytics" size={24} color={colors.onSurfaceVariant} />
@@ -259,7 +264,7 @@ const styles = StyleSheet.create({
     padding: spacing.base,
   },
   headerTitle: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
   },
   avatar: {
@@ -281,11 +286,6 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: colors.surfaceContainerHigh,
     marginBottom: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 4,
   },
   profileImage: {
     width: '100%',
@@ -335,11 +335,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
   },
   statLabel: {
     ...typography.labelSm,
@@ -374,11 +369,6 @@ const styles = StyleSheet.create({
     borderColor: colors.outlineVariant,
     borderRadius: borderRadius.lg,
     padding: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
   },
   achievementRow: {
     flexDirection: 'row',
@@ -429,11 +419,6 @@ const styles = StyleSheet.create({
     borderColor: colors.outlineVariant,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
   },
   settingsRow: {
     flexDirection: 'row',
@@ -472,14 +457,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.surfaceContainerLowest,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.outlineVariant,
   },
   navItem: {
     alignItems: 'center',

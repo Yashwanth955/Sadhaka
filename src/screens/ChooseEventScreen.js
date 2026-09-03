@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Image
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../theme/colors';
@@ -8,10 +8,34 @@ import typography from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 
 const events = [
-  { id: 'athletics-sprint', name: 'Sprint', icon: 'speed', desc: '30m, Jumps, Reaction' },
-  { id: 'athletics-distance', name: 'Distance Running', icon: 'directions-run', desc: 'Beep Test, 1.6km, Endurance' },
-  { id: 'athletics-longjump', name: 'Long Jump', icon: 'height', desc: 'Jumps, Sprint, Flexibility' },
-  { id: 'athletics-throwing', name: 'Throwing', icon: 'sports-handball', desc: 'Throws, Push-Ups, Power' },
+  { 
+    id: 'athletics-sprint', 
+    name: 'Sprint', 
+    icon: 'speed', 
+    desc: '30m, Jumps, Reaction',
+    image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80'
+  },
+  { 
+    id: 'athletics-distance', 
+    name: 'Distance Running', 
+    icon: 'directions-run', 
+    desc: 'Beep Test, 1.6km, Endurance',
+    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=800&q=80'
+  },
+  { 
+    id: 'athletics-longjump', 
+    name: 'Long Jump', 
+    icon: 'height', 
+    desc: 'Jumps, Sprint, Flexibility',
+    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80'
+  },
+  { 
+    id: 'athletics-throwing', 
+    name: 'Throwing', 
+    icon: 'sports-handball', 
+    desc: 'Throws, Push-Ups, Power',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80'
+  },
 ];
 
 export default function ChooseEventScreen({ navigation }) {
@@ -21,7 +45,7 @@ export default function ChooseEventScreen({ navigation }) {
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Athletics Events</Text>
+        <Text style={styles.headerTitle}>Sadhaka</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -36,13 +60,18 @@ export default function ChooseEventScreen({ navigation }) {
             <TouchableOpacity 
               key={event.id} 
               style={styles.eventCard}
-              onPress={() => navigation.navigate('SportAssessments', { sportId: event.id, sportName: `Athletics - ${event.name}` })}
+              onPress={() => navigation.navigate('SportAssessments', { 
+                sportId: event.id, 
+                sportName: `Athletics - ${event.name}`,
+                sportImage: event.image
+              })}
             >
-              <View style={styles.cardIconWrapper}>
-                <MaterialIcons name={event.icon} size={32} color={colors.onPrimaryContainer} />
-              </View>
+              <Image source={{ uri: event.image }} style={styles.cardImageThumb} />
               <View style={styles.cardContent}>
-                <Text style={styles.eventCardTitle}>{event.name}</Text>
+                <View style={styles.tagRow}>
+                  <MaterialIcons name={event.icon} size={16} color={colors.primary} />
+                  <Text style={styles.eventCardTitle}>{event.name}</Text>
+                </View>
                 <Text style={styles.eventCardDesc}>{event.desc}</Text>
               </View>
               <MaterialIcons name="chevron-right" size={24} color={colors.outline} />
@@ -64,22 +93,35 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.outlineVariant,
   },
   iconButton: { padding: spacing.base },
-  headerTitle: { ...typography.headlineMd, color: colors.primary },
+  headerTitle: { ...typography.brandTitle, color: colors.primary },
   titleSection: { marginBottom: spacing.lg },
   pageTitle: { ...typography.displayLg, fontSize: 32, lineHeight: 40, color: colors.primary, marginBottom: spacing.xs },
   pageSubtitle: { ...typography.bodyLg, color: colors.onSurfaceVariant },
   gridContainer: { gap: spacing.md },
   eventCard: {
-    backgroundColor: colors.surfaceContainerLowest, borderRadius: borderRadius.xl,
-    borderWidth: 1, borderColor: colors.outlineVariant, padding: spacing.md,
-    flexDirection: 'row', alignItems: 'center', shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    backgroundColor: colors.surfaceContainerLowest, 
+    borderRadius: borderRadius.xl,
+    borderWidth: 1, 
+    borderColor: colors.outlineVariant, 
+    padding: spacing.md,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    overflow: 'hidden',
   },
-  cardIconWrapper: {
-    width: 56, height: 56, backgroundColor: colors.primaryContainer,
-    borderRadius: borderRadius.lg, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md,
+  cardImageThumb: {
+    width: 64, 
+    height: 64, 
+    borderRadius: borderRadius.md, 
+    marginRight: spacing.md,
+    backgroundColor: colors.surfaceContainerHighest,
   },
   cardContent: { flex: 1 },
-  eventCardTitle: { ...typography.headlineMd, color: colors.onSurface, marginBottom: 4 },
-  eventCardDesc: { ...typography.bodyMd, color: colors.onSurfaceVariant },
+  tagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  eventCardTitle: { ...typography.headlineMd, fontSize: 18, color: colors.onSurface },
+  eventCardDesc: { ...typography.bodyMd, fontSize: 13, color: colors.onSurfaceVariant },
 });

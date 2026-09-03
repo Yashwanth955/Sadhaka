@@ -12,19 +12,19 @@ const slides = [
     id: '1',
     title: 'Discover Elite Talent',
     description: 'Leverage advanced AI algorithms to identify top-tier athletes globally with unprecedented precision.',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDXOkt8jI9ucJttZH3eB9vhKE2bG2JeTaFP9bqahxaxgo3YLk0fkydafg6FHOegH6aoeHbekvnqVuBd-t2GgIZQ09Z02tC1b1YEJu84SVja_d5dQ9v4SnW_fza9ZB6JEJIDuV1J40kI8RtvQHFYPuXi1o9Ivo8UrCxfdU2QDBlCNgSMJLlNP-ru-4kDfuY1FS8n5rOPkapnvJaqZti2dPrEGUzFHZH1hl00Cjxk4_Kf_qqzT3OKt863',
+    image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: '2',
     title: 'AI-Powered Assessment',
     description: 'Analyze biometric data and performance metrics instantly to generate comprehensive scout reports.',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCOFvHQgadhmTAwxzjaRHe3inNABtT4ZtYyzTVX6e3GIIC6V1iC1R9yLoCejuVEcALbPTwMOD-MUx3-gTG26seJw1vFIwMyQxrHAF2Tr2dgjmlKSR7MDcHRT5nrXsKhvZ181nGCySmd_6Ii-Rr5RZwwAKfuy5ccmLErXOtaeXOnLRwt7YLkBA6KWh6VZO5pj4V5jFbrtNesiW3XcAb-LTvSU6qztvIZ0EHgGXNMS-_43nmOmULjzX64',
+    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: '3',
     title: 'Build Your Dream Team',
     description: 'Make data-driven decisions and streamline your recruitment process from discovery to signing.',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCPBKvgBAd-l2yPqTdfIui9qm3gL7c_RHgSJ9lxiNf1ciNhH1IH_ZDjUvMnfJx0c0jS0Shhl36J10WCg8GV2PnTgHta4AyJGjSapDGTamK3-90h5wMWoAXerrWYwslokGvpASXtDkYDxwvrHaRbB0Jzc2ZgTSfYCYhnBjWcIEmJ4-w8ppNpl9UoFeHcNIPfWmNgVgfKqInN4zZlczZQtFLde7Cv6ZHuNVzCCrXqTGX_22NVXjGzVgNJ',
+    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
   }
 ];
 
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   logoText: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
   },
   skipText: {

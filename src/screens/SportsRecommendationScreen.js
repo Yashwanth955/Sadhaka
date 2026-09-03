@@ -4,8 +4,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing } from '../theme/spacing';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function SportsRecommendationScreen({ navigation }) {
+  const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
+  const avatarUri = userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
@@ -14,12 +18,12 @@ export default function SportsRecommendationScreen({ navigation }) {
           <MaterialIcons name="sports-score" size={24} color={colors.primary} />
           <Text style={styles.headerTitle}>Sadhaka</Text>
         </View>
-        <View style={styles.profilePicContainer}>
+        <TouchableOpacity style={styles.profilePicContainer} onPress={() => navigation.navigate('Profile')}>
           <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCANmvZLE5nXBBGhfBl0QgxbZvH2zgJ6-ArTd7sVVHXNUdH62ajVXIEKBuWrJHzSwh4mNyruufyv9-QDX96aibFmoGZe6Vj9lsAxXqhINz-v1gTTis50zbUTJOEJjwf037V-CHHz-RUSPWlwpsoG8-fzb9UvocagW7SyYqXAx-bg5skhKzrtB9imQjxZZUhe0AX23fsDyoYsR86kK4XKRT3PtUkvWHR13Saqum2etHt1UTC5L2c5Cob' }}
+            source={{ uri: avatarUri }}
             style={styles.profilePic}
           />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -141,7 +145,7 @@ export default function SportsRecommendationScreen({ navigation }) {
         
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChooseSport')}>
           <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Assess</Text>
+          <Text style={styles.navText}>Assessments</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
@@ -180,7 +184,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
   },
   profilePicContainer: {
@@ -221,11 +225,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
   },
   cardLeftBorder: {
     position: 'absolute',
@@ -305,11 +304,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 4,
   },
   roadmapTitle: {
     ...typography.headlineMd,
@@ -355,11 +349,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.outlineVariant,
     padding: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
   },
   secondaryHeader: {
     flexDirection: 'row',
@@ -416,12 +405,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(195, 197, 217, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 10,
+    borderTopColor: colors.outlineVariant,
   },
   navItem: {
     alignItems: 'center',

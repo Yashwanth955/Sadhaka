@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -11,6 +11,9 @@ import {
   Inter_400Regular, Inter_500Medium, Inter_600SemiBold 
 } from '@expo-google-fonts/inter';
 import { View, ActivityIndicator } from 'react-native';
+
+import { initDb } from './src/services/localDb';
+import { syncReferenceData } from './src/services/referenceDataSync';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -41,6 +44,21 @@ export default function App() {
     Inter_500Medium,
     Inter_600SemiBold,
   });
+
+  // App Startup Wiring: Initialize SQLite & Refresh Reference Data from Firestore
+  useEffect(() => {
+    async function bootstrapDatabase() {
+      try {
+        await initDb();
+        console.log('[App] SQLite database initialized successfully.');
+        await syncReferenceData();
+      } catch (err) {
+        console.warn('[App] Startup database initialization warning:', err);
+      }
+    }
+
+    bootstrapDatabase();
+  }, []);
 
   if (!fontsLoaded) {
     return (
@@ -74,6 +92,7 @@ export default function App() {
           <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
           <Stack.Screen name="SportsRecommendation" component={SportsRecommendationScreen} />
           <Stack.Screen name="OverallProgress" component={OverallProgressDashboardScreen} />
+          <Stack.Screen name="OverallProgressDashboard" component={OverallProgressDashboardScreen} />
           <Stack.Screen name="AssessmentHistory" component={AssessmentHistoryScreen} />
         </Stack.Navigator>
       </NavigationContainer>

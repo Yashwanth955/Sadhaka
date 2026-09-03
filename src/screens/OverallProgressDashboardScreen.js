@@ -4,8 +4,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing } from '../theme/spacing';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function OverallProgressDashboardScreen({ navigation }) {
+  const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
+  const avatarUri = userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR;
   const bars = [40, 35, 50, 45, 60, 85, 70];
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -19,12 +22,12 @@ export default function OverallProgressDashboardScreen({ navigation }) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Sadhaka</Text>
         </View>
-        <View style={styles.profilePicContainer}>
+        <TouchableOpacity style={styles.profilePicContainer} onPress={() => navigation.navigate('Profile')}>
           <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDO1k7Qz65ILRJomssuQwaTHvIX4HPWW37T3mrtWUWSdbfXhu8R2K3DANOMM55nSrZjQwjZ2Ucgzie9aq5W135wzW5QC0CtmaGX0aQXXUVxITCXlnZhHwEnbE9ws_gseHhiVaTWKQX98NPFOi0Gf40sQdkrsejvxOHYsYD5_R9wnvqBwQoQ9sd0r6zfjahQoIa5Cs4EgLZrdpdeICJj3ijJVDmzOF2k1V654P22OdN3KldhYINWprDS' }}
+            source={{ uri: avatarUri }}
             style={styles.profilePic}
           />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -203,7 +206,7 @@ export default function OverallProgressDashboardScreen({ navigation }) {
           onPress={() => navigation.navigate('ChooseSport')}
         >
           <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Assess</Text>
+          <Text style={styles.navText}>Assessments</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.navItemActive}>
@@ -251,7 +254,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   headerTitle: {
-    ...typography.headlineMd,
+    ...typography.brandTitle,
     color: colors.primary,
   },
   profilePicContainer: {
@@ -345,11 +348,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   cardLeftBorder: {
     position: 'absolute',
@@ -408,11 +406,6 @@ const styles = StyleSheet.create({
   },
   barActive: {
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 4,
   },
   chartXAxis: {
     flexDirection: 'row',
@@ -449,11 +442,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   summaryIconBox: {
     width: 48,
@@ -501,11 +489,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
   recentItemLeft: {
     flexDirection: 'row',
@@ -556,11 +539,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
   },
   recommendationCtaLeft: {
     flexDirection: 'row',
@@ -583,12 +561,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(195, 197, 217, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 10,
+    borderTopColor: colors.outlineVariant,
   },
   navItem: {
     alignItems: 'center',

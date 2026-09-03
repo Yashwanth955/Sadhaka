@@ -1,169 +1,195 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { 
+  View, Text, StyleSheet, SafeAreaView, TouchableOpacity, 
+  TextInput, ScrollView, ActivityIndicator, Alert 
+} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import colors from '../theme/colors';
-import typography from '../theme/typography';
-import { spacing } from '../theme/spacing';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
+const SPORTS_LIST = [
+  'Cricket',
+  'Football',
+  'Badminton',
+  'Athletics',
+  'Hockey',
+  'Basketball',
+  'Volleyball',
+  'Kabaddi',
+  'Kho-Kho',
+  'Wrestling',
+  'Boxing'
+];
+
 export default function BasicDetailsScreen({ navigation }) {
-  const { currentUser } = useAuth();
-  const [gender, setGender] = useState('male');
-  const [dob, setDob] = useState('');
+  const { currentUser, updateUserProfile } = useAuth();
+  const [gender, setGender] = useState('male'); // 'male' (Boy) | 'female' (Girl)
+  const [primarySport, setPrimarySport] = useState('Cricket');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
-  const [primarySport, setPrimarySport] = useState('');
+  const [showSportPicker, setShowSportPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleNext = async () => {
-    if (currentUser) {
-      setLoading(true);
-      try {
-        await setDoc(doc(db, 'users', currentUser.uid), {
-          dob,
-          gender,
-          height,
-          weight,
-          primarySport
-        }, { merge: true });
-      } catch (err) {
-        console.warn('Failed to save to Firestore:', err);
-      }
-      setLoading(false);
+    if (!height || !weight) {
+      Alert.alert('Required Details', 'Please enter your height and weight.');
+      return;
     }
-    navigation.navigate('SportsRecommendation');
+
+    setLoading(true);
+    try {
+      if (updateUserProfile) {
+        await updateUserProfile({
+          gender,
+          primarySport,
+          height: Number(height),
+          weight: Number(weight),
+          lastUpdated: new Date().toISOString()
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to save basic details:', err);
+    }
+    setLoading(false);
+    navigation.navigate('Main');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.onSurfaceVariant} />
+      {/* App Header */}
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={24} color="#111816" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sadhaka</Text>
-        <View style={styles.spacer} />
+        <Text style={styles.brandTitle}>Sadhaka</Text>
+        <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
-        {/* Header Section */}
-        <View style={styles.titleSection}>
-          <View style={styles.stepHeader}>
-            <Text style={styles.stepText}>STEP 1 OF 2</Text>
-            <Text style={styles.stepLabel}>Basic Details</Text>
-          </View>
-          
-          <View style={styles.progressBar}>
-            <View style={styles.progressFill} />
-          </View>
-          
-          <Text style={styles.mainTitle}>Complete Your Profile</Text>
-          <Text style={styles.subtitle}>Help us customize your elite training experience by providing your basic physiological data.</Text>
-        </View>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.innerContent}>
+          <Text style={styles.mainTitle}>Athlete Profile</Text>
+          <Text style={styles.subtitle}>Enter your details to configure personalized SAI benchmarks</Text>
 
-        {/* Form Section */}
-        <View style={styles.formContainer}>
-          {/* Date of Birth */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date of Birth</Text>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                placeholder="MM/DD/YYYY"
-                placeholderTextColor={colors.onSurfaceVariant}
-                value={dob}
-                onChangeText={setDob}
-              />
-              <MaterialIcons name="calendar-today" size={20} color={colors.onSurfaceVariant} style={styles.inputIcon} />
-            </View>
-          </View>
-
-          {/* Gender Segmented Button */}
+          {/* 1. GENDER SELECTION (Boy / Girl) */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Gender</Text>
-            <View style={styles.segmentedControl}>
-              <TouchableOpacity
-                style={[styles.segmentButton, gender === 'male' && styles.segmentActive]}
+            <View style={styles.genderRow}>
+              <TouchableOpacity 
+                style={[styles.genderCard, gender === 'male' && styles.genderCardActive]}
                 onPress={() => setGender('male')}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.segmentText, gender === 'male' && styles.segmentTextActive]}>Male</Text>
+                <MaterialIcons 
+                  name="male" 
+                  size={28} 
+                  color={gender === 'male' ? '#111816' : '#61897c'} 
+                />
+                <Text style={[styles.genderCardText, gender === 'male' && styles.genderCardTextActive]}>
+                  Boy / Male
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.segmentButton, gender === 'female' && styles.segmentActive]}
+
+              <TouchableOpacity 
+                style={[styles.genderCard, gender === 'female' && styles.genderCardActive]}
                 onPress={() => setGender('female')}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.segmentText, gender === 'female' && styles.segmentTextActive]}>Female</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.segmentButton, gender === 'other' && styles.segmentActive]}
-                onPress={() => setGender('other')}
-              >
-                <Text style={[styles.segmentText, gender === 'other' && styles.segmentTextActive]}>Other</Text>
+                <MaterialIcons 
+                  name="female" 
+                  size={28} 
+                  color={gender === 'female' ? '#111816' : '#61897c'} 
+                />
+                <Text style={[styles.genderCardText, gender === 'female' && styles.genderCardTextActive]}>
+                  Girl / Female
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Physical Metrics */}
-          <View style={styles.rowGrid}>
-            <View style={[styles.inputGroup, styles.flex]}>
-              <Text style={styles.label}>Height</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="180"
-                  placeholderTextColor={colors.onSurfaceVariant}
-                  keyboardType="numeric"
-                  value={height}
-                  onChangeText={setHeight}
-                />
-                <Text style={styles.unitText}>cm</Text>
-              </View>
-            </View>
-            <View style={[styles.inputGroup, styles.flex]}>
-              <Text style={styles.label}>Weight</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="75"
-                  placeholderTextColor={colors.onSurfaceVariant}
-                  keyboardType="numeric"
-                  value={weight}
-                  onChangeText={setWeight}
-                />
-                <Text style={styles.unitText}>kg</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Primary Sport */}
+          {/* 2. SPORT SELECTION */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Primary Sport</Text>
-            <View style={styles.inputWrapper}>
+            <TouchableOpacity 
+              style={styles.selectBox}
+              onPress={() => setShowSportPicker(!showSportPicker)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.selectBoxText}>{primarySport || 'Select a sport'}</Text>
+              <MaterialIcons name={showSportPicker ? "arrow-drop-up" : "arrow-drop-down"} size={26} color="#61897c" />
+            </TouchableOpacity>
+
+            {showSportPicker && (
+              <View style={styles.dropdownContainer}>
+                <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled>
+                  {SPORTS_LIST.map((sport) => (
+                    <TouchableOpacity
+                      key={sport}
+                      style={[styles.dropdownItem, primarySport === sport && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setPrimarySport(sport);
+                        setShowSportPicker(false);
+                      }}
+                    >
+                      <Text style={[styles.dropdownItemText, primarySport === sport && styles.dropdownItemTextActive]}>
+                        {sport}
+                      </Text>
+                      {primarySport === sport && (
+                        <MaterialIcons name="check" size={18} color="#111816" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* 3. HEIGHT (CM) */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Height (cm)</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="height" size={22} color="#61897c" style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
-                placeholder="Select your discipline"
-                placeholderTextColor={colors.onSurfaceVariant}
-                value={primarySport}
-                onChangeText={setPrimarySport}
+                style={styles.textInput}
+                placeholder="Enter your height (e.g. 165)"
+                placeholderTextColor="#61897c"
+                value={height}
+                onChangeText={setHeight}
+                keyboardType="numeric"
               />
-              <MaterialIcons name="expand-more" size={24} color={colors.onSurfaceVariant} style={styles.inputIcon} />
             </View>
           </View>
+
+          {/* 4. WEIGHT (KG) */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Weight (kg)</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="fitness-center" size={20} color="#61897c" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your weight (e.g. 58)"
+                placeholderTextColor="#61897c"
+                value={weight}
+                onChangeText={setWeight}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* Next Button */}
+          <TouchableOpacity 
+            style={[styles.nextButton, loading && styles.disabledButton]} 
+            onPress={handleNext}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#111816" />
+            ) : (
+              <Text style={styles.nextButtonText}>Next</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* CTA Area */}
-      <View style={styles.ctaArea}>
-        <TouchableOpacity 
-          style={styles.nextButton}
-          onPress={handleNext}
-          disabled={loading}
-        >
-          <Text style={styles.nextButtonText}>{loading ? "Saving..." : "Next Step"}</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={colors.onPrimary} />
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -171,153 +197,170 @@ export default function BasicDetailsScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#ffffff',
   },
   flex: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.marginMobile,
-    paddingVertical: spacing.sm,
-  },
-  iconButton: {
-    padding: 8,
-    marginLeft: -8,
-  },
-  headerTitle: {
-    ...typography.headlineMd,
-    color: colors.primary,
-  },
-  spacer: {
-    width: 40,
-  },
   container: {
-    paddingHorizontal: spacing.marginMobile,
-    paddingTop: spacing.md,
-    paddingBottom: 100,
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
-  titleSection: {
-    marginBottom: spacing.xl,
-  },
-  stepHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  stepText: {
-    ...typography.labelBold,
-    color: colors.primary,
-  },
-  stepLabel: {
-    ...typography.labelSm,
-    color: colors.onSurfaceVariant,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: 4,
-    marginBottom: spacing.sm,
-  },
-  progressFill: {
-    height: '100%',
-    width: '50%',
-    backgroundColor: colors.primary,
-    borderRadius: 4,
-  },
-  mainTitle: {
-    ...typography.headlineLgMobile,
-    color: colors.onBackground,
-    marginBottom: 8,
-  },
-  subtitle: {
-    ...typography.bodyMd,
-    color: colors.onSurfaceVariant,
-  },
-  formContainer: {
-    gap: spacing.lg,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    ...typography.labelBold,
-    color: colors.onBackground,
-  },
-  inputWrapper: {
+  headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceBright,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: 8,
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-  },
-  input: {
-    flex: 1,
-    ...typography.bodyMd,
-    color: colors.onBackground,
     paddingVertical: 12,
   },
-  inputIcon: {
-    marginLeft: 8,
+  backButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
-  unitText: {
-    ...typography.labelSm,
-    color: colors.onSurfaceVariant,
-    marginLeft: 8,
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: 8,
-    padding: 4,
-    gap: 4,
-  },
-  segmentButton: {
+  brandTitle: {
+    fontFamily: 'Montserrat_800ExtraBold',
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111816',
     flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 6,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
-  segmentActive: {
-    backgroundColor: colors.primaryContainer,
+  headerSpacer: {
+    width: 44,
   },
-  segmentText: {
-    ...typography.labelBold,
-    color: colors.onSurfaceVariant,
+  innerContent: {
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+    marginTop: 8,
   },
-  segmentTextActive: {
-    color: colors.onPrimaryContainer,
+  mainTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111816',
+    textAlign: 'center',
+    marginBottom: 4,
   },
-  rowGrid: {
+  subtitle: {
+    fontSize: 14,
+    color: '#61897c',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111816',
+    marginBottom: 8,
+  },
+  genderRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: 12,
   },
-  ctaArea: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: spacing.marginMobile,
-    backgroundColor: 'rgba(248, 249, 255, 0.9)',
-    borderTopWidth: 1,
-    borderTopColor: colors.surfaceVariant,
-  },
-  nextButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
+  genderCard: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#f0f4f3',
+    borderRadius: 14,
+    height: 56,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  genderCardActive: {
+    backgroundColor: '#d8f9ed',
+    borderColor: '#13eca4',
+  },
+  genderCardText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#61897c',
+  },
+  genderCardTextActive: {
+    color: '#111816',
+    fontWeight: '700',
+  },
+  selectBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f0f4f3',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 54,
+  },
+  selectBoxText: {
+    fontSize: 15,
+    color: '#111816',
+    fontWeight: '500',
+  },
+  dropdownContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  dropdownItemActive: {
+    backgroundColor: '#f0fdf9',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#4b5563',
+  },
+  dropdownItemTextActive: {
+    color: '#111816',
+    fontWeight: '700',
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f4f3',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 54,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#111816',
+  },
+  nextButton: {
+    backgroundColor: '#13eca4',
+    height: 52,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
   },
   nextButtonText: {
-    ...typography.labelBold,
-    color: colors.onPrimary,
-    marginRight: 8,
     fontSize: 16,
+    fontWeight: '700',
+    color: '#111816',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });

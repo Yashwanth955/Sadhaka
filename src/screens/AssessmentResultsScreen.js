@@ -13,7 +13,7 @@ export default function AssessmentResultsScreen({ navigation }) {
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Assessment Results</Text>
+        <Text style={styles.headerTitle}>Sadhaka</Text>
         <View style={styles.spacer} />
       </View>
 
@@ -31,7 +31,7 @@ export default function AssessmentResultsScreen({ navigation }) {
           
           <View style={styles.videoContainer}>
             <ImageBackground
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDu7HuKSrJkIXK7WW_5QawK9UfBqRl2HV43bwrMdM1IL0TND6uS4z1pZfiG4udT5cbGRm5HhWIC4uetRK9BePatFzoHxhG0edGggy2vawdchVB6Nj8jZgrc6cgzwhM0AyyRn7kXOcMDdR3ers_KtKkAtb3UDkd9d_ZkASFupFi9-YgMkBI4NDgD7K0zonj66oKomfNXpAxoZKRY6uq-x2EHX8bNuXpt0zkVeN02Hg1y7U-5xglem24j' }}
+              source={{ uri: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80' }}
               style={styles.videoImage}
             >
               <View style={styles.playButtonBig}>
@@ -201,8 +201,8 @@ const styles = StyleSheet.create({
     marginLeft: -8,
   },
   headerTitle: {
-    ...typography.headlineMd,
-    color: colors.onSurface,
+    ...typography.brandTitle,
+    color: colors.primary,
   },
   spacer: {
     width: 40,
@@ -216,12 +216,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLowest,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(195, 197, 217, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
     overflow: 'hidden',
     position: 'relative',
     marginBottom: spacing.sm, // fallback for gap
@@ -279,11 +273,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 65, 200, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   timelineBar: {
     position: 'absolute',
@@ -328,12 +317,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLowest,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(195, 197, 217, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
     padding: spacing.md,
     position: 'relative',
     overflow: 'hidden',
