@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { AuthProvider } from './src/contexts/AuthContext';
+import React, { useEffect, Suspense, lazy } from 'react';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -10,30 +10,109 @@ import {
 import { 
   Inter_400Regular, Inter_500Medium, Inter_600SemiBold 
 } from '@expo-google-fonts/inter';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 
-import { initDb } from './src/services/localDb';
+import { initDb, inspectLocalDb } from './src/models';
 import { syncReferenceData } from './src/services/referenceDataSync';
 
-// Screens
-import LoginScreen from './src/screens/LoginScreen';
-import SignUpScreen from './src/screens/SignUpScreen';
-import AthleteHomeDashboardScreen from './src/screens/AthleteHomeDashboardScreen';
-import AthleteProfileScreen from './src/screens/AthleteProfileScreen';
-import ChooseYourSportScreen from './src/screens/ChooseYourSportScreen';
-import ChooseEventScreen from './src/screens/ChooseEventScreen';
-import SportAssessmentsScreen from './src/screens/SportAssessmentsScreen';
-import TestInstructionsScreen from './src/screens/TestInstructionsScreen';
-import AILiveAssessmentScreen from './src/screens/AILiveAssessmentScreen';
-import AssessmentResultsScreen from './src/screens/AssessmentResultsScreen';
+// MVC Views - Screens
+import {
+  LoginScreen,
+  SignUpScreen,
+  AthleteHomeDashboardScreen,
+  AthleteProfileScreen,
+  ChooseYourSportScreen,
+  ChooseEventScreen,
+  SportAssessmentsScreen,
+  TestInstructionsScreen,
+  AssessmentResultsScreen,
+  OnboardingCarouselScreen,
+  BasicDetailsScreen,
+  SportsRecommendationScreen,
+  OverallProgressDashboardScreen,
+  AssessmentHistoryScreen,
+  EditProfileScreen
+} from './src/views/screens';
 
-import OnboardingCarouselScreen from './src/screens/OnboardingCarouselScreen';
-import BasicDetailsScreen from './src/screens/BasicDetailsScreen';
-import SportsRecommendationScreen from './src/screens/SportsRecommendationScreen';
-import OverallProgressDashboardScreen from './src/screens/OverallProgressDashboardScreen';
-import AssessmentHistoryScreen from './src/screens/AssessmentHistoryScreen';
+// Import Platform for web detection
+import { Platform } from 'react-native';
+
+// Lazy: MediaPipe/VisionCamera native modules only exist in an EAS/dev-client build
+const CameraScreen = lazy(() => import('./src/screens/CameraScreen').catch(() => null));
 
 const Stack = createNativeStackNavigator();
+
+function CameraScreenRoute(props) {
+  // Show web-incompatible message when running on web
+  if (Platform.OS === 'web') {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0B0F19' }}>
+        <Text style={{ color: '#FFFFFF', textAlign: 'center', padding: 20 }}>
+          Camera functionality is not available on web browsers.\n\n
+          Please use the mobile app for pose detection features.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0B0F19' }}>
+          <ActivityIndicator size="large" color="#06B6D4" />
+        </View>
+      }
+    >
+      <CameraScreen {...props} />
+    </Suspense>
+  );
+}
+
+function AppNavigator() {
+  const { currentUser, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#0041c8" />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <Stack.Navigator
+        initialRouteName={currentUser ? "Main" : "Login"}
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
+        <Stack.Screen name="Main" component={AthleteHomeDashboardScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="Profile" component={AthleteProfileScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="ChooseSport" component={ChooseYourSportScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="ChooseEvent" component={ChooseEventScreen} />
+        <Stack.Screen name="SportAssessments" component={SportAssessmentsScreen} />
+        <Stack.Screen name="TestInstructions" component={TestInstructionsScreen} />
+        <Stack.Screen
+          name="Camera"
+          component={CameraScreenRoute}
+          options={{ animation: 'fade', gestureEnabled: false }}
+        />
+        <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
+        <Stack.Screen name="OnboardingCarousel" component={OnboardingCarouselScreen} />
+        <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
+        <Stack.Screen name="SportsRecommendation" component={SportsRecommendationScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="OverallProgress" component={OverallProgressDashboardScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="OverallProgressDashboard" component={OverallProgressDashboardScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="AssessmentHistory" component={AssessmentHistoryScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -52,6 +131,7 @@ export default function App() {
         await initDb();
         console.log('[App] SQLite database initialized successfully.');
         await syncReferenceData();
+        await inspectLocalDb();
       } catch (err) {
         console.warn('[App] Startup database initialization warning:', err);
       }
@@ -70,32 +150,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="dark" />
-        <Stack.Navigator
-          initialRouteName="Login"
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="SignUp" component={SignUpScreen} />
-          <Stack.Screen name="Main" component={AthleteHomeDashboardScreen} />
-          <Stack.Screen name="Profile" component={AthleteProfileScreen} />
-          <Stack.Screen name="ChooseSport" component={ChooseYourSportScreen} />
-          <Stack.Screen name="ChooseEvent" component={ChooseEventScreen} />
-          <Stack.Screen name="SportAssessments" component={SportAssessmentsScreen} />
-          <Stack.Screen name="TestInstructions" component={TestInstructionsScreen} />
-          <Stack.Screen name="AILiveAssessment" component={AILiveAssessmentScreen} />
-          <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
-          <Stack.Screen name="OnboardingCarousel" component={OnboardingCarouselScreen} />
-          <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
-          <Stack.Screen name="SportsRecommendation" component={SportsRecommendationScreen} />
-          <Stack.Screen name="OverallProgress" component={OverallProgressDashboardScreen} />
-          <Stack.Screen name="OverallProgressDashboard" component={OverallProgressDashboardScreen} />
-          <Stack.Screen name="AssessmentHistory" component={AssessmentHistoryScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <AppNavigator />
     </AuthProvider>
   );
 }

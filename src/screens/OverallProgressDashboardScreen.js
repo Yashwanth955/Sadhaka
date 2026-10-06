@@ -1,16 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import { useAuth } from '../contexts/AuthContext';
+import BottomNavBar from '../components/BottomNavBar';
+import { getUserProgressMetrics, MOCK_USER_ID } from '../models';
 
 export default function OverallProgressDashboardScreen({ navigation }) {
   const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
   const avatarUri = userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR;
-  const bars = [40, 35, 50, 45, 60, 85, 70];
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const [metrics, setMetrics] = useState(null);
+  const [timeFilter, setTimeFilter] = useState('Week');
+  const [selectedSport, setSelectedSport] = useState('Athletics');
+
+  useEffect(() => {
+    async function loadMetrics() {
+      try {
+        const data = await getUserProgressMetrics(currentUser?.uid, timeFilter);
+        setMetrics(data);
+      } catch (err) {
+        console.warn('Failed to load metrics from local DB:', err);
+      }
+    }
+    loadMetrics();
+  }, [currentUser?.uid, timeFilter]);
+
+  const isMock = currentUser?.uid === MOCK_USER_ID;
+  const isNew = !isMock && (!metrics || metrics?.hasSessions === false);
+  const bars = metrics?.weeklyBars || (isMock ? [40, 35, 50, 45, 60, 85, 70] : [0, 0, 0, 0, 0, 0, 0]);
+  const days = metrics?.days || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -35,32 +55,52 @@ export default function OverallProgressDashboardScreen({ navigation }) {
         <View style={styles.titleRow}>
           <Text style={styles.mainTitle}>Overall Progress</Text>
           <View style={styles.filterContainer}>
-            <TouchableOpacity style={styles.filterButton}><Text style={styles.filterText}>Day</Text></TouchableOpacity>
-            <TouchableOpacity style={[styles.filterButton, styles.filterButtonActive]}>
-              <Text style={styles.filterTextActive}>Week</Text>
+            <TouchableOpacity 
+              style={[styles.filterButton, timeFilter === 'Day' && styles.filterButtonActive]}
+              onPress={() => setTimeFilter('Day')}
+            >
+              <Text style={timeFilter === 'Day' ? styles.filterTextActive : styles.filterText}>Day</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.filterButton}><Text style={styles.filterText}>Month</Text></TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.filterButton, timeFilter === 'Week' && styles.filterButtonActive]}
+              onPress={() => setTimeFilter('Week')}
+            >
+              <Text style={timeFilter === 'Week' ? styles.filterTextActive : styles.filterText}>Week</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.filterButton, timeFilter === 'Month' && styles.filterButtonActive]}
+              onPress={() => setTimeFilter('Month')}
+            >
+              <Text style={timeFilter === 'Month' ? styles.filterTextActive : styles.filterText}>Month</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Sports Selector */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll} contentContainerStyle={styles.sportsScrollContent}>
-          <TouchableOpacity style={[styles.sportPill, styles.sportPillActive]}>
-            <MaterialIcons name="directions-run" size={20} color={colors.onPrimaryContainer} />
-            <Text style={styles.sportPillTextActive}>Athletics</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sportPill}>
-            <MaterialIcons name="sports-soccer" size={20} color={colors.onSurfaceVariant} />
-            <Text style={styles.sportPillText}>Football</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sportPill}>
-            <MaterialIcons name="sports-cricket" size={20} color={colors.onSurfaceVariant} />
-            <Text style={styles.sportPillText}>Cricket</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sportPill}>
-            <MaterialIcons name="fitness-center" size={20} color={colors.onSurfaceVariant} />
-            <Text style={styles.sportPillText}>Strength</Text>
-          </TouchableOpacity>
+          {['Athletics', 'Football', 'Cricket', 'Strength'].map((sport) => {
+            const isActive = selectedSport === sport;
+            const iconMap = {
+              Athletics: 'directions-run',
+              Football: 'sports-soccer',
+              Cricket: 'sports-cricket',
+              Strength: 'fitness-center'
+            };
+            return (
+              <TouchableOpacity 
+                key={sport} 
+                style={[styles.sportPill, isActive && styles.sportPillActive]}
+                onPress={() => setSelectedSport(sport)}
+              >
+                <MaterialIcons 
+                  name={iconMap[sport] || 'fitness-center'} 
+                  size={20} 
+                  color={isActive ? colors.onPrimaryContainer : colors.onSurfaceVariant} 
+                />
+                <Text style={isActive ? styles.sportPillTextActive : styles.sportPillText}>{sport}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {/* Main Chart Section */}
@@ -69,16 +109,16 @@ export default function OverallProgressDashboardScreen({ navigation }) {
           
           <View style={styles.chartHeader}>
             <View>
-              <Text style={styles.chartLabel}>PERFORMANCE TREND</Text>
-              <Text style={styles.chartTitle}>Overall Score</Text>
+              <Text style={styles.chartLabel}>{metrics?.chartLabel || 'PERFORMANCE TREND'}</Text>
+              <Text style={styles.chartTitle}>{metrics?.chartTitle || (isNew ? 'No Assessments Yet' : 'Overall Score')}</Text>
             </View>
             <View style={styles.trendBadge}>
-              <MaterialIcons name="trending-up" size={16} color={colors.primary} />
-              <Text style={styles.trendBadgeText}>+12%</Text>
+              <MaterialIcons name={isNew ? "info-outline" : "trending-up"} size={16} color={colors.primary} />
+              <Text style={styles.trendBadgeText}>{metrics?.trendBadge || (isNew ? '0%' : '+12%')}</Text>
             </View>
           </View>
 
-          {/* Simple Bar Chart Mock */}
+          {/* Simple Bar Chart */}
           <View style={styles.chartArea}>
             <View style={styles.chartBars}>
               {bars.map((height, index) => (
@@ -86,15 +126,15 @@ export default function OverallProgressDashboardScreen({ navigation }) {
                   key={index} 
                   style={[
                     styles.bar, 
-                    { height: `${height}%` },
-                    index === 5 && styles.barActive
+                    { height: `${Math.max(height, 4)}%`, opacity: height > 0 ? 1 : 0.15 },
+                    index === (bars.length - 2) && height > 0 && styles.barActive
                   ]} 
                 />
               ))}
             </View>
             <View style={styles.chartXAxis}>
               {days.map((day, index) => (
-                <Text key={index} style={[styles.axisLabel, index === 5 && styles.axisLabelActive]}>{day}</Text>
+                <Text key={index} style={[styles.axisLabel, index === (days.length - 2) && !isNew && styles.axisLabelActive]}>{day}</Text>
               ))}
             </View>
           </View>
@@ -121,7 +161,7 @@ export default function OverallProgressDashboardScreen({ navigation }) {
             </View>
             <View>
               <Text style={styles.summaryLabel}>Total Tests Completed</Text>
-              <Text style={styles.summaryValue}>24</Text>
+              <Text style={styles.summaryValue}>{metrics?.totalTests ?? 0}</Text>
             </View>
           </View>
 
@@ -130,8 +170,8 @@ export default function OverallProgressDashboardScreen({ navigation }) {
               <MaterialIcons name="event-available" size={24} color={colors.onSecondaryContainer} />
             </View>
             <View>
-              <Text style={styles.summaryLabel}>Active Days (This Week)</Text>
-              <Text style={styles.summaryValue}>5 <Text style={styles.summaryValueSub}>/ 7</Text></Text>
+              <Text style={styles.summaryLabel}>{metrics?.activeLabel || 'Active Days (This Week)'}</Text>
+              <Text style={styles.summaryValue}>{metrics?.activeValue || (isMock ? '6 / 7' : '0 / 7')}</Text>
             </View>
           </View>
         </View>
@@ -149,79 +189,57 @@ export default function OverallProgressDashboardScreen({ navigation }) {
         </View>
 
         <View style={styles.recentList}>
-          {/* Item 1 */}
-          <TouchableOpacity style={styles.recentItem}>
-            <View style={styles.recentItemLeft}>
-              <View style={styles.recentIconBox}>
-                <MaterialIcons name="timer" size={20} color={colors.primary} />
-              </View>
-              <View>
-                <Text style={styles.recentItemTitle}>100m Sprint</Text>
-                <Text style={styles.recentItemSub}>Athletics • Oct 24, 2023</Text>
-              </View>
+          {(metrics?.recentTests && metrics.recentTests.length > 0) ? (
+            metrics.recentTests.map((item, idx) => (
+              <TouchableOpacity 
+                key={item.id || idx} 
+                style={styles.recentItem}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('AssessmentResults', { 
+                  session: { 
+                    ...item, 
+                    score: item.scoreText, 
+                    description: item.feedback 
+                  } 
+                })}
+              >
+                <View style={styles.recentItemLeft}>
+                  <View style={styles.recentIconBox}>
+                    <MaterialIcons name={item.icon || 'fitness-center'} size={20} color={colors.primary} />
+                  </View>
+                  <View>
+                    <Text style={styles.recentItemTitle}>{item.title}</Text>
+                    <Text style={styles.recentItemSub}>{item.dateText}</Text>
+                  </View>
+                </View>
+                <View style={styles.recentItemRight}>
+                  <View style={styles.recentScoreRow}>
+                    <Text style={styles.recentScoreText}>{item.scoreText}</Text>
+                    {item.badge === 'Personal Best' ? (
+                      <MaterialIcons name="star" size={14} color={colors.primary} />
+                    ) : (
+                      <MaterialIcons name="arrow-upward" size={14} color={colors.success} />
+                    )}
+                  </View>
+                  <Text style={[styles.recentScoreLabel, item.badge === 'Personal Best' && { color: colors.primary, fontWeight: '700' }]}>
+                    {item.badge}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={[styles.recentItem, { justifyContent: 'center', paddingVertical: 18 }]}>
+              <Text style={{ color: colors.onSurfaceVariant, fontSize: 13, textAlign: 'center' }}>
+                No assessments completed yet
+              </Text>
             </View>
-            <View style={styles.recentItemRight}>
-              <View style={styles.recentScoreRow}>
-                <Text style={styles.recentScoreText}>11.2s</Text>
-                <MaterialIcons name="arrow-downward" size={16} color={colors.primary} />
-              </View>
-              <Text style={styles.recentScoreLabel}>Personal Best</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Item 2 */}
-          <TouchableOpacity style={styles.recentItem}>
-            <View style={styles.recentItemLeft}>
-              <View style={styles.recentIconBox}>
-                <MaterialIcons name="height" size={20} color={colors.primary} />
-              </View>
-              <View>
-                <Text style={styles.recentItemTitle}>Vertical Jump</Text>
-                <Text style={styles.recentItemSub}>Strength • Oct 22, 2023</Text>
-              </View>
-            </View>
-            <View style={styles.recentItemRight}>
-              <View style={styles.recentScoreRow}>
-                <Text style={[styles.recentScoreText, { color: colors.onSurface }]}>65 cm</Text>
-              </View>
-              <Text style={[styles.recentScoreLabel, { color: colors.onSurfaceVariant }]}>Top 15%</Text>
-            </View>
-          </TouchableOpacity>
+          )}
         </View>
 
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => navigation.navigate('Main')}
-        >
-          <MaterialIcons name="dashboard" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Dashboard</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => navigation.navigate('ChooseSport')}
-        >
-          <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Assessments</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItemActive}>
-          <MaterialIcons name="psychology" size={24} color={colors.onPrimaryContainer} />
-          <Text style={styles.navTextActive}>Insights</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => navigation.navigate('Profile')}
-        >
-          <MaterialIcons name="person" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Persistent Bottom Navigation */}
+      <BottomNavBar activeTab="OverallProgress" navigation={navigation} />
     </SafeAreaView>
   );
 }

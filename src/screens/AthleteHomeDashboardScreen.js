@@ -8,13 +8,16 @@ import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 import PrimaryButton from '../components/PrimaryButton';
+import BottomNavBar from '../components/BottomNavBar';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getUserProgressMetrics, MOCK_USER_ID } from '../models';
 
 export default function AthleteHomeDashboardScreen({ navigation }) {
   const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
   const [userData, setUserData] = useState(null);
+  const [metrics, setMetrics] = useState(null);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -29,9 +32,18 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
           console.warn("Error fetching user data:", error);
         }
       }
+
+      try {
+        const dbMetrics = await getUserProgressMetrics(currentUser?.uid);
+        setMetrics(dbMetrics);
+      } catch (err) {
+        console.warn("Error fetching metrics from local DB:", err);
+      }
     }
     fetchUserData();
   }, [currentUser]);
+
+  const isMockUser = currentUser?.uid === MOCK_USER_ID;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -55,17 +67,21 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
       >
         {/* Greeting */}
         <View style={styles.greetingSection}>
-          <Text style={styles.greetingTitle}>Good morning, {currentUser?.displayName?.split(' ')[0] || 'Athlete'} 👋</Text>
+          <Text style={styles.greetingTitle}>Good morning, {currentUser?.displayName?.split(' ')[0] || userProfile?.fullName?.split(' ')[0] || 'Athlete'} 👋</Text>
           <Text style={styles.greetingSubtitle}>Ready to discover your sporting potential?</Text>
         </View>
 
         {/* Performance Score Hero */}
         <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>OVERALL SCORE</Text>
-          <Text style={styles.heroScore}>84</Text>
+          <Text style={styles.heroLabel}>OVERALL READINESS SCORE</Text>
+          <Text style={styles.heroScore}>
+            {!metrics?.hasSessions ? '--' : (metrics?.readinessScore ?? '--')}
+          </Text>
           <View style={styles.trendPill}>
-            <MaterialIcons name="trending-up" size={18} color={colors.onPrimary} />
-            <Text style={styles.trendText}>+3 from last session</Text>
+            <MaterialIcons name={!metrics?.hasSessions ? "info-outline" : "trending-up"} size={18} color={colors.onPrimary} />
+            <Text style={styles.trendText}>
+              {!metrics?.hasSessions ? "No assessments yet" : "+4 from last session"}
+            </Text>
           </View>
         </View>
 
@@ -100,7 +116,7 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
               <MaterialIcons name="local-fire-department" size={20} color={colors.outline} />
               <Text style={styles.statusLabel}>Training streak</Text>
             </View>
-            <Text style={styles.statusValue}>5 days</Text>
+            <Text style={styles.statusValue}>{metrics?.hasSessions ? (metrics?.trainingStreak ?? 0) : 0} days</Text>
           </View>
 
           <View style={styles.statusRow}>
@@ -108,7 +124,7 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
               <MaterialIcons name="check-circle-outline" size={20} color={colors.outline} />
               <Text style={styles.statusLabel}>Goals completed</Text>
             </View>
-            <Text style={styles.statusValue}>4/6</Text>
+            <Text style={styles.statusValue}>{metrics?.hasSessions ? (metrics?.activeDaysThisWeek || '5/7') : '0/7'}</Text>
           </View>
 
           <View style={[styles.statusRow, styles.statusRowLast]}>
@@ -116,9 +132,12 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
               <MaterialIcons name="assessment" size={20} color={colors.outline} />
               <Text style={styles.statusLabel}>Assessment status</Text>
             </View>
-            <View style={styles.readyBadge}>
-              <Text style={styles.readyBadgeText}>Ready</Text>
-            </View>
+            <TouchableOpacity 
+              style={styles.readyBadge}
+              onPress={() => navigation.navigate('AILiveAssessment')}
+            >
+              <Text style={styles.readyBadgeText}>Live Pose AI ›</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
 
@@ -132,32 +151,50 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
               <MaterialIcons name="emoji-events" size={20} color={colors.primary} />
               <Text style={styles.cardTitle}>Recommended Sports</Text>
             </View>
+            <View style={styles.cardHeaderRight}>
+              <Text style={styles.detailsLink}>View AI Details</Text>
+              <MaterialIcons name="chevron-right" size={16} color={colors.primary} />
+            </View>
           </View>
 
-          <View style={styles.sportItem}>
-            <View style={styles.sportItemLeft}>
-              <Text style={styles.medalEmoji}>🥇</Text>
-              <Text style={styles.sportName}>{userData?.primarySport || 'Athletics'}</Text>
+          {(isMockUser && metrics?.hasSessions) ? (
+            <>
+              <View style={styles.sportItem}>
+                <View style={styles.sportItemLeft}>
+                  <Text style={styles.medalEmoji}>🥇</Text>
+                  <Text style={styles.sportName}>{userData?.primarySport || userProfile?.primarySport || metrics?.profile?.primarySport || 'Cricket'}</Text>
+                </View>
+                <Text style={styles.sportScore}>92%</Text>
+              </View>
+              <View style={styles.sportItem}>
+                <View style={styles.sportItemLeft}>
+                  <Text style={styles.medalEmoji}>🥈</Text>
+                  <Text style={styles.sportName}>Kabaddi</Text>
+                </View>
+                <Text style={styles.sportScore}>87%</Text>
+              </View>
+              <View style={styles.sportItem}>
+                <View style={styles.sportItemLeft}>
+                  <Text style={styles.medalEmoji}>🥉</Text>
+                  <Text style={styles.sportName}>Hockey</Text>
+                </View>
+                <Text style={styles.sportScore}>82%</Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.emptySportsContainer}>
+              <View style={styles.emptySportsRow}>
+                <MaterialIcons name="sports" size={20} color={colors.primary} />
+                <Text style={styles.emptySportsFocus}>Primary Focus: <Text style={styles.emptySportsSport}>{userProfile?.primarySport || userData?.primarySport || 'Cricket'}</Text></Text>
+              </View>
+              <Text style={styles.emptySportsText}>
+                Complete fitness assessments to calculate your AI talent identification and sports suitability scores.
+              </Text>
             </View>
-            <Text style={styles.sportScore}>91%</Text>
-          </View>
-          <View style={styles.sportItem}>
-            <View style={styles.sportItemLeft}>
-              <Text style={styles.medalEmoji}>🥈</Text>
-              <Text style={styles.sportName}>Kabaddi</Text>
-            </View>
-            <Text style={styles.sportScore}>87%</Text>
-          </View>
-          <View style={styles.sportItem}>
-            <View style={styles.sportItemLeft}>
-              <Text style={styles.medalEmoji}>🥉</Text>
-              <Text style={styles.sportName}>Hockey</Text>
-            </View>
-            <Text style={styles.sportScore}>82%</Text>
-          </View>
+          )}
         </TouchableOpacity>
 
-        {/* Progress Chart Mock */}
+        {/* Progress Chart */}
         <TouchableOpacity 
           style={styles.progressCard}
           onPress={() => navigation.navigate('OverallProgress')}
@@ -165,45 +202,27 @@ export default function AthleteHomeDashboardScreen({ navigation }) {
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <MaterialIcons name="insights" size={20} color={colors.primary} />
-              <Text style={styles.cardTitle}>Progress</Text>
+              <Text style={styles.cardTitle}>Weekly Progress</Text>
             </View>
           </View>
 
           <View style={styles.chartContainer}>
-            {/* Simple mock bar chart */}
-            {[40, 45, 55, 50, 70, 85, 95].map((val, idx) => (
+            {(metrics?.weeklyBars || (metrics?.hasSessions ? [40, 45, 55, 50, 70, 85, 95] : [0, 0, 0, 0, 0, 0, 0])).map((val, idx) => (
               <View key={idx} style={styles.chartBarWrapper}>
-                <View style={[styles.chartBar, { height: `${val}%`, opacity: 0.2 + (val / 100) }]} />
+                <View style={[styles.chartBar, { height: `${Math.max(val, 4)}%`, opacity: val > 0 ? (0.2 + (val / 100)) : 0.08 }]} />
               </View>
             ))}
           </View>
           <View style={styles.chartLabels}>
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
-              <Text key={idx} style={styles.chartDayText}>{day}</Text>
+            {(metrics?.days || ['M', 'T', 'W', 'T', 'F', 'S', 'S']).map((day, idx) => (
+              <Text key={idx} style={styles.chartDayText}>{typeof day === 'string' ? day[0] : day}</Text>
             ))}
           </View>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Bottom Navigation Mock */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItemActive} onPress={() => navigation.navigate('Main')}>
-          <MaterialIcons name="dashboard" size={24} color={colors.onPrimaryContainer} />
-          <Text style={styles.navItemTextActive}>Dashboard</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChooseSport')}>
-          <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Assessments</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
-          <MaterialIcons name="psychology" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Insights</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
-          <MaterialIcons name="person" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Persistent Bottom Navigation */}
+      <BottomNavBar activeTab="Main" navigation={navigation} />
     </SafeAreaView>
   );
 }
@@ -408,6 +427,33 @@ const styles = StyleSheet.create({
     ...typography.headlineMd,
     fontSize: 18,
     color: colors.primary,
+  },
+  emptySportsContainer: {
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.surfaceVariant,
+  },
+  emptySportsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  emptySportsFocus: {
+    ...typography.bodyMd,
+    fontWeight: '600',
+    color: colors.onSurface,
+  },
+  emptySportsSport: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  emptySportsText: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
   },
   progressCard: {
     backgroundColor: colors.surfaceContainerLowest,

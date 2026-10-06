@@ -5,23 +5,53 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.sportsai",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Sports AI needs camera access for real-time pose detection during fitness assessments.",
+        "NSMicrophoneUsageDescription": "Sports AI may use the microphone for recording assessment sessions."
+      }
     },
     "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.anonymous.sportsai"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-dev-client",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Sports AI needs camera access for real-time pose detection during fitness assessments.",
+          "enableMicrophonePermission": false,
+          "enableFrameProcessors": true
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "389a0336-c829-41e9-a887-522ce240a7ba"
+      }
+    },
+    "owner": "candie95"
   }
 }

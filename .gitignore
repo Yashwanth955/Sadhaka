@@ -1,15 +1,22 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
 
-# Expo
+# Expo & Bundles
 .expo/
+.expo-shared/
 dist/
+dist_test/
 web-build/
 expo-env.d.ts
+*.hbc
+*.hbc.map
+*.bundle
 
-# Native
+# Native & Android Builds
 .kotlin/
 *.orig.*
 *.jks
@@ -17,39 +24,57 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+/ios
+/android
 
 # Metro
 .metro-health-check*
 
-# debug
+# Logs & Debugging
+*.log
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macOS
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS Files
 .DS_Store
 *.pem
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# local env files
+# Local Environment & Secrets
 .env
 .env*.local
+.env.development
+.env.production
+credentials.json
+.eas/
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
-
-# SQLite & Database
+# SQLite & Databases
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
 sports_ai.db
+sports_ai_kinetic.db*
 
-# Scratch & Stitch temporary artifacts
+# Temporary Artifacts & Reports
 scratch/
 stitch/
 .stitch/
-
+*.tmp
+*.bak

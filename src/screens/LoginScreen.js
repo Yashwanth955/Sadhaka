@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   KeyboardAvoidingView, Platform, TextInput, ActivityIndicator
@@ -13,10 +13,16 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loginWithGoogle } = useAuth();
+  const { currentUser, login, loginWithGoogle } = useAuth();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentUser?.uid) {
+      navigation.replace('Main');
+    }
+  }, [currentUser]);
 
   const handleLogin = async () => {
     if (!email || !password) return setError('Please enter your email and password');
@@ -63,6 +69,20 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.innerContent}>
           <Text style={styles.headingTitle}>Welcome Back</Text>
           <Text style={styles.headingSubtitle}>Sign in to continue your sports assessment</Text>
+
+          {/* Quick Mock Credentials Autofill */}
+          <TouchableOpacity 
+            style={styles.demoBanner}
+            onPress={() => {
+              setEmail('aarav.sharma@sportsai.in');
+              setPassword('password123');
+            }}
+          >
+            <MaterialIcons name="account-circle" size={18} color={colors.primary} />
+            <Text style={styles.demoBannerText}>
+              Mock User: <Text style={styles.demoBannerBold}>aarav.sharma@sportsai.in</Text> | <Text style={styles.demoBannerBold}>password123</Text> (Tap to fill)
+            </Text>
+          </TouchableOpacity>
 
           {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
 
@@ -196,7 +216,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#61897c',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  demoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 20,
+    gap: 6,
+  },
+  demoBannerText: {
+    fontSize: 12,
+    color: '#166534',
+    textAlign: 'center',
+  },
+  demoBannerBold: {
+    fontWeight: '700',
+    color: '#14532d',
   },
   errorBanner: {
     backgroundColor: '#fee2e2',

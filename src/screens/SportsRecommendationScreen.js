@@ -1,21 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import typography from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import { spacing, borderRadius } from '../theme/spacing';
 import { useAuth } from '../contexts/AuthContext';
+import BottomNavBar from '../components/BottomNavBar';
+import { getUserProgressMetrics, MOCK_USER_ID } from '../models';
 
 export default function SportsRecommendationScreen({ navigation }) {
   const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
   const avatarUri = userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR;
+  const [metrics, setMetrics] = useState(null);
+
+  useEffect(() => {
+    async function fetchMetrics() {
+      if (currentUser?.uid) {
+        try {
+          const m = await getUserProgressMetrics(currentUser.uid);
+          setMetrics(m);
+        } catch (e) {
+          console.warn('Error fetching metrics for recommendations:', e);
+        }
+      }
+    }
+    fetchMetrics();
+  }, [currentUser?.uid]);
+
+  const isMock = currentUser?.uid === MOCK_USER_ID;
+  const hasSessions = isMock || Boolean(metrics?.hasSessions);
+  const primarySport = userProfile?.primarySport || 'Cricket';
 
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <MaterialIcons name="sports-score" size={24} color={colors.primary} />
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Sadhaka</Text>
         </View>
         <TouchableOpacity style={styles.profilePicContainer} onPress={() => navigation.navigate('Profile')}>
@@ -29,135 +52,150 @@ export default function SportsRecommendationScreen({ navigation }) {
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Title Section */}
         <View style={styles.titleSection}>
-          <Text style={styles.mainTitle}>Your Top Potential</Text>
-          <Text style={styles.subtitle}>AI Analysis based on your speed, power, and agility benchmarks.</Text>
+          <Text style={styles.mainTitle}>{hasSessions ? "Your Top Potential" : "AI Sports Potential"}</Text>
+          <Text style={styles.subtitle}>
+            {hasSessions 
+              ? "AI Analysis based on your speed, power, and agility benchmarks." 
+              : "Complete your initial fitness battery to generate sports suitability matches."}
+          </Text>
         </View>
 
-        {/* Primary Recommendation Card */}
-        <View style={styles.primaryCard}>
-          <View style={styles.cardLeftBorder} />
-          
-          <View style={styles.matchBadgeRow}>
-            <View style={styles.matchBadge}>
-              <Text style={styles.matchBadgeText}>98% Match</Text>
-            </View>
-            <Text style={styles.topRecText}>TOP RECOMMENDATION</Text>
-          </View>
-          
-          <Text style={styles.sportTitle}>Sprinting (100m - 200m)</Text>
-          <Text style={styles.tierText}>National Tier Potential</Text>
-          
-          <Text style={styles.sectionLabel}>Key Strengths Detected</Text>
-          <View style={styles.tagsContainer}>
-            <View style={styles.tag}><Text style={styles.tagText}>Explosive Power (Top 2%)</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>High Stride Frequency</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Elite Reaction Time</Text></View>
-          </View>
-          
-          <Text style={styles.sectionLabel}>Why this sport?</Text>
-          <View style={styles.insightBox}>
-            <Text style={styles.insightText}>
-              Your recent countermovement jump data combined with your 10m acceleration split indicates a rare fast-twitch muscle fiber dominance. You possess the biomechanical profile necessary to excel in short-distance explosive events.
-            </Text>
-          </View>
-        </View>
-
-        {/* Next Steps Roadmap */}
-        <View style={styles.roadmapCard}>
-          <Text style={styles.roadmapTitle}>Next Steps Roadmap</Text>
-          
-          <View style={styles.roadmapList}>
-            <View style={styles.roadmapItem}>
-              <MaterialIcons name="check-circle" size={20} color={colors.onPrimary} />
-              <Text style={styles.roadmapItemText}>Join a local track club</Text>
-            </View>
-            <View style={styles.roadmapItem}>
-              <MaterialIcons name="check-circle" size={20} color={colors.onPrimary} />
-              <Text style={styles.roadmapItemText}>Start power-specific training protocol</Text>
-            </View>
-            <View style={styles.roadmapItem}>
-              <MaterialIcons name="check-circle" size={20} color={colors.onPrimary} />
-              <Text style={styles.roadmapItemText}>Complete advanced flexibility assessment</Text>
-            </View>
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.startRoadmapButton}
-            onPress={() => navigation.navigate('Main')}
-          >
-            <Text style={styles.startRoadmapText}>Start Roadmap</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Secondary Recommendations */}
-        <Text style={styles.secondaryTitle}>Strong Alternatives</Text>
-        
-        <View style={styles.secondaryGrid}>
-          {/* Alt Card 1 */}
-          <View style={styles.secondaryCard}>
-            <View style={styles.secondaryHeader}>
-              <View>
-                <View style={styles.matchBadgeSecondary}>
-                  <Text style={styles.matchBadgeSecondaryText}>89% Match</Text>
+        {hasSessions ? (
+          <>
+            {/* Primary Recommendation Card */}
+            <View style={styles.primaryCard}>
+              <View style={styles.cardLeftBorder} />
+              
+              <View style={styles.matchBadgeRow}>
+                <View style={styles.matchBadge}>
+                  <Text style={styles.matchBadgeText}>98% Match</Text>
                 </View>
-                <Text style={styles.altSportTitle}>Long Jump</Text>
-                <Text style={styles.altTierText}>Collegiate Tier Potential</Text>
+                <Text style={styles.topRecText}>TOP RECOMMENDATION</Text>
               </View>
-              <MaterialIcons name="sports-gymnastics" size={32} color={colors.outline} />
+              
+              <Text style={styles.sportTitle}>Sprinting (100m - 200m)</Text>
+              <Text style={styles.tierText}>National Tier Potential</Text>
+              
+              <Text style={styles.sectionLabel}>Key Strengths Detected</Text>
+              <View style={styles.tagsContainer}>
+                <View style={styles.tag}><Text style={styles.tagText}>Explosive Power (Top 2%)</Text></View>
+                <View style={styles.tag}><Text style={styles.tagText}>High Stride Frequency</Text></View>
+                <View style={styles.tag}><Text style={styles.tagText}>Elite Reaction Time</Text></View>
+              </View>
+              
+              <Text style={styles.sectionLabel}>Why this sport?</Text>
+              <View style={styles.insightBox}>
+                <Text style={styles.insightText}>
+                  Your recent countermovement jump data combined with your 10m acceleration split indicates a rare fast-twitch muscle fiber dominance. You possess the biomechanical profile necessary to excel in short-distance explosive events.
+                </Text>
+              </View>
             </View>
-            
-            <Text style={styles.sectionLabelSmall}>Strengths:</Text>
-            <View style={styles.tagsContainer}>
-              <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Vertical Force</Text></View>
-              <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Sprint Mechanics</Text></View>
-            </View>
-          </View>
 
-          {/* Alt Card 2 */}
-          <View style={styles.secondaryCard}>
-            <View style={styles.secondaryHeader}>
-              <View>
-                <View style={styles.matchBadgeSecondary}>
-                  <Text style={styles.matchBadgeSecondaryText}>82% Match</Text>
+            {/* Next Steps Roadmap */}
+            <View style={styles.roadmapCard}>
+              <Text style={styles.roadmapTitle}>Next Steps Roadmap</Text>
+              
+              <View style={styles.roadmapList}>
+                <View style={styles.roadmapItem}>
+                  <MaterialIcons name="check-circle" size={20} color={colors.onPrimary} />
+                  <Text style={styles.roadmapItemText}>Join a local track club</Text>
                 </View>
-                <Text style={styles.altSportTitle}>American Football</Text>
-                <Text style={styles.altTierText}>Varsity Tier Potential</Text>
+                <View style={styles.roadmapItem}>
+                  <MaterialIcons name="check-circle" size={20} color={colors.onPrimary} />
+                  <Text style={styles.roadmapItemText}>Start power-specific training protocol</Text>
+                </View>
+                <View style={styles.roadmapItem}>
+                  <MaterialIcons name="check-circle" size={20} color={colors.onPrimary} />
+                  <Text style={styles.roadmapItemText}>Complete advanced flexibility assessment</Text>
+                </View>
               </View>
-              <MaterialIcons name="sports-football" size={32} color={colors.outline} />
+              
+              <TouchableOpacity 
+                style={styles.startRoadmapButton}
+                onPress={() => navigation.navigate('Main')}
+              >
+                <Text style={styles.startRoadmapText}>Start Roadmap</Text>
+              </TouchableOpacity>
             </View>
+
+            {/* Secondary Recommendations */}
+            <Text style={styles.secondaryTitle}>Strong Alternatives</Text>
             
-            <Text style={styles.sectionLabelSmall}>Strengths:</Text>
-            <View style={styles.tagsContainer}>
-              <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Agility</Text></View>
-              <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Acceleration</Text></View>
+            <View style={styles.secondaryGrid}>
+              {/* Alt Card 1 */}
+              <View style={styles.secondaryCard}>
+                <View style={styles.secondaryHeader}>
+                  <View>
+                    <View style={styles.matchBadgeSecondary}>
+                      <Text style={styles.matchBadgeSecondaryText}>89% Match</Text>
+                    </View>
+                    <Text style={styles.altSportTitle}>Long Jump</Text>
+                    <Text style={styles.altTierText}>Collegiate Tier Potential</Text>
+                  </View>
+                  <MaterialIcons name="sports-gymnastics" size={32} color={colors.outline} />
+                </View>
+                
+                <Text style={styles.sectionLabelSmall}>Strengths:</Text>
+                <View style={styles.tagsContainer}>
+                  <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Vertical Force</Text></View>
+                  <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Sprint Mechanics</Text></View>
+                </View>
+              </View>
+
+              {/* Alt Card 2 */}
+              <View style={styles.secondaryCard}>
+                <View style={styles.secondaryHeader}>
+                  <View>
+                    <View style={styles.matchBadgeSecondary}>
+                      <Text style={styles.matchBadgeSecondaryText}>82% Match</Text>
+                    </View>
+                    <Text style={styles.altSportTitle}>American Football</Text>
+                    <Text style={styles.altTierText}>Varsity Tier Potential</Text>
+                  </View>
+                  <MaterialIcons name="sports-football" size={32} color={colors.outline} />
+                </View>
+                
+                <Text style={styles.sectionLabelSmall}>Strengths:</Text>
+                <View style={styles.tagsContainer}>
+                  <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Agility</Text></View>
+                  <View style={styles.tagSmall}><Text style={styles.tagTextSmall}>Acceleration</Text></View>
+                </View>
+              </View>
+            </View>
+          </>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyCard}>
+              <View style={styles.emptyIconBox}>
+                <MaterialIcons name="emoji-events" size={40} color={colors.primary} />
+              </View>
+              <Text style={styles.emptyCardTitle}>No Assessment Data Yet</Text>
+              <Text style={styles.emptyCardDesc}>
+                Personalized talent identification requires at least one completed physical assessment.
+              </Text>
+
+              <View style={styles.focusCard}>
+                <Text style={styles.focusLabel}>CURRENT SELECTION</Text>
+                <Text style={styles.focusSport}>{primarySport}</Text>
+                <Text style={styles.focusNote}>
+                  Assessments in speed, agility, and power will benchmark you against national standards for {primarySport} and other Olympic sports.
+                </Text>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.ctaStartBtn}
+                onPress={() => navigation.navigate('ChooseSport')}
+              >
+                <MaterialIcons name="play-arrow" size={20} color={colors.onPrimary} />
+                <Text style={styles.ctaStartText}>Start Assessment Battery</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </View>
-        
+        )}
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Main')}>
-          <MaterialIcons name="dashboard" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Dashboard</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChooseSport')}>
-          <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Assessments</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
-          <MaterialIcons name="psychology" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Insights</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
-          <MaterialIcons name="person" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Persistent Bottom Navigation */}
+      <BottomNavBar activeTab="OverallProgress" navigation={navigation} />
     </SafeAreaView>
   );
 }
@@ -393,6 +431,83 @@ const styles = StyleSheet.create({
   tagTextSmall: {
     ...typography.labelSm,
     color: colors.onBackground,
+  },
+  backButton: {
+    padding: 4,
+    marginRight: 4,
+  },
+  emptyContainer: {
+    marginTop: spacing.md,
+  },
+  emptyCard: {
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  emptyIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primaryContainer,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  emptyCardTitle: {
+    ...typography.headlineMd,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  emptyCardDesc: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+    lineHeight: 20,
+  },
+  focusCard: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.surfaceVariant,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  focusLabel: {
+    ...typography.labelSm,
+    color: colors.outline,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  focusSport: {
+    ...typography.headlineSm,
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  focusNote: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
+  },
+  ctaStartBtn: {
+    width: '100%',
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: borderRadius.md,
+    gap: 8,
+  },
+  ctaStartText: {
+    ...typography.labelBold,
+    color: colors.onPrimary,
+    fontSize: 16,
   },
   bottomNav: {
     position: 'absolute',

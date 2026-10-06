@@ -13,7 +13,7 @@ import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import testDefinitionsData from '../data/testDefinitionsData.json';
-import { getTestById } from '../services/localDb';
+import { getTestById } from '../models';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -358,13 +358,18 @@ export default function TestInstructionsScreen({ route, navigation }) {
         <TouchableOpacity 
           style={[styles.readyButton, isComingSoon && styles.disabledButton]}
           disabled={isComingSoon}
-          onPress={() => navigation.navigate('AILiveAssessment', { 
-            testId: testData.id, 
-            testName: testData.name,
-            detectionMethod: testData.detectionMethod,
-            implementationStatus: testData.implementationStatus,
-            gender: athleteGender
-          })}
+          onPress={() =>
+            navigation.navigate('Camera', {
+              testId: testData.id || route?.params?.testId,
+              testName: testData.name,
+              cameraPosition: 'front',
+              targetFps: 12,
+              minConfidence: 0.5,
+              // Wire your feature-extraction pipeline here, e.g.:
+              // onPoseDetected: (poseFrame) => feedFeatureExtractor(poseFrame),
+              // onNoPersonDetected: () => markGapInPipeline(),
+            })
+          }
         >
           <Text style={[styles.readyButtonText, isComingSoon && styles.disabledButtonText]}>
             {isComingSoon ? 'Coming Soon' : "I'm Ready, Start Test"}

@@ -104,6 +104,11 @@ const testDatabase = {
   '1.6 km Run': { title: '1.6 km Run', category: 'Endurance', duration: '~10m', difficulty: 'High Difficulty', difficultyIcon: 'signal-cellular-alt' },
   'Medicine Ball Throw': { title: 'Medicine Ball Throw', category: 'Power', duration: '~10s', difficulty: 'Med Difficulty', difficultyIcon: 'signal-cellular-alt-2-bar' },
   'Shuttle Run': { title: 'Shuttle Run', category: 'Agility', duration: '~15s', difficulty: 'Med Difficulty', difficultyIcon: 'signal-cellular-alt-2-bar' },
+  'Height Test': { title: 'Height Test', category: 'Anthropometrics', duration: '~1m', difficulty: 'Low Difficulty', difficultyIcon: 'signal-cellular-alt-1-bar' },
+  'Weight Test': { title: 'Weight Test', category: 'Anthropometrics', duration: '~1m', difficulty: 'Low Difficulty', difficultyIcon: 'signal-cellular-alt-1-bar' },
+  'Sit-Ups': { title: 'Sit-Ups', category: 'Core', duration: '~45s', difficulty: 'Med Difficulty', difficultyIcon: 'signal-cellular-alt-2-bar' },
+  '4x10m Shuttle Run': { title: '4x10m Shuttle Run', category: 'Agility', duration: '~15s', difficulty: 'Med Difficulty', difficultyIcon: 'signal-cellular-alt-2-bar' },
+  '800m Run': { title: '800m Run', category: 'Endurance', duration: '~5m', difficulty: 'High Difficulty', difficultyIcon: 'signal-cellular-alt' },
 };
 
 export const getTestsForSport = (sportId) => {

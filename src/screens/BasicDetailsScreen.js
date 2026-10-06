@@ -23,11 +23,12 @@ const SPORTS_LIST = [
 ];
 
 export default function BasicDetailsScreen({ navigation }) {
-  const { currentUser, updateUserProfile } = useAuth();
-  const [gender, setGender] = useState('male'); // 'male' (Boy) | 'female' (Girl)
-  const [primarySport, setPrimarySport] = useState('Cricket');
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
+  const { currentUser, userProfile, updateUserProfile } = useAuth();
+  const [gender, setGender] = useState(userProfile?.gender || 'male'); // 'male' (Boy) | 'female' (Girl)
+  const [primarySport, setPrimarySport] = useState(userProfile?.primarySport || 'Cricket');
+  const [age, setAge] = useState(userProfile?.age ? String(userProfile.age) : '');
+  const [height, setHeight] = useState(userProfile?.height ? String(userProfile.height) : '');
+  const [weight, setWeight] = useState(userProfile?.weight ? String(userProfile.weight) : '');
   const [showSportPicker, setShowSportPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -45,6 +46,10 @@ export default function BasicDetailsScreen({ navigation }) {
           primarySport,
           height: Number(height),
           weight: Number(weight),
+          ...(age ? { age: Number(age) } : {}),
+          fullName: userProfile?.fullName || currentUser?.displayName || 'Athlete',
+          name: userProfile?.fullName || currentUser?.displayName || 'Athlete',
+          email: userProfile?.email || currentUser?.email || '',
           lastUpdated: new Date().toISOString()
         });
       }
@@ -52,7 +57,7 @@ export default function BasicDetailsScreen({ navigation }) {
       console.warn('Failed to save basic details:', err);
     }
     setLoading(false);
-    navigation.navigate('Main');
+    navigation.replace('Main');
   };
 
   return (
@@ -144,7 +149,23 @@ export default function BasicDetailsScreen({ navigation }) {
             )}
           </View>
 
-          {/* 3. HEIGHT (CM) */}
+          {/* 3. AGE (YEARS) */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Age (years)</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="cake" size={20} color="#61897c" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your age (e.g. 17)"
+                placeholderTextColor="#61897c"
+                value={age}
+                onChangeText={setAge}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* 4. HEIGHT (CM) */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Height (cm)</Text>
             <View style={styles.inputBox}>

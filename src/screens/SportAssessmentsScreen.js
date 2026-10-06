@@ -5,7 +5,7 @@ import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 import { getTestsForSport, sportsImageMap } from '../data/sportsData';
-import { getSportById, getTestById } from '../services/localDb';
+import { getSportById, getTestById } from '../models';
 
 export default function SportAssessmentsScreen({ route, navigation }) {
   const { sportId, sportName, sportImage } = route.params || { sportId: 'cricket', sportName: 'Cricket' };

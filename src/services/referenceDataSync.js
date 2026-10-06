@@ -1,7 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import { collection, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { upsertTestDefinition, upsertSport } from './localDb';
+import { upsertTestDefinition, upsertSport } from '../models';
 import testDefinitionsData from '../data/testDefinitionsData.json';
 import sportsData from '../data/sportsData.json';
 

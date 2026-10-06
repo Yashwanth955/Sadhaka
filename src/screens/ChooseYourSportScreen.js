@@ -8,8 +8,9 @@ import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 import { sportsList, sportsImageMap } from '../data/sportsData';
-import { getSportsFromLocalDb } from '../services/localDb';
+import { getSportsFromLocalDb } from '../models';
 import { useAuth } from '../contexts/AuthContext';
+import BottomNavBar from '../components/BottomNavBar';
 
 export default function ChooseYourSportScreen({ navigation }) {
   const { currentUser, userProfile, DEFAULT_ATHLETE_AVATAR } = useAuth();
@@ -121,25 +122,8 @@ export default function ChooseYourSportScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation Mock */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Main')}>
-          <MaterialIcons name="dashboard" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Dashboard</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItemActive} onPress={() => navigation.navigate('ChooseSport')}>
-          <MaterialIcons name="fitness-center" size={24} color={colors.onPrimaryContainer} />
-          <Text style={styles.navItemTextActive}>Assessments</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
-          <MaterialIcons name="psychology" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Insights</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
-          <MaterialIcons name="person" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Persistent Bottom Navigation */}
+      <BottomNavBar activeTab="ChooseSport" navigation={navigation} />
     </SafeAreaView>
   );
 }

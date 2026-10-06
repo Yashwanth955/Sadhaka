@@ -8,17 +8,49 @@ import colors from '../theme/colors';
 import typography from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 import { useAuth } from '../contexts/AuthContext';
+import BottomNavBar from '../components/BottomNavBar';
 import { db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getUserProfileFromDb, getUserProgressMetrics, MOCK_USER_ID } from '../models';
+
+function calculateAge(dobString) {
+  if (!dobString) return '17';
+  const today = new Date();
+  const birthDate = new Date(dobString);
+  if (isNaN(birthDate.getTime())) return '17';
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age.toString();
+}
 
 export default function AthleteProfileScreen({ navigation }) {
   const { currentUser, userProfile, logout, DEFAULT_ATHLETE_AVATAR } = useAuth();
   const [userData, setUserData] = useState(null);
+  const [dbMetrics, setDbMetrics] = useState(null);
+  const [dbProfile, setDbProfile] = useState(null);
 
   const avatarUri = userProfile?.photoURL || currentUser?.photoURL || DEFAULT_ATHLETE_AVATAR;
-  const displayWeight = userData?.weight || userProfile?.weight || 64;
-  const displayHeight = userData?.height || userProfile?.height || 172;
-  const displaySport = userData?.primarySport || userProfile?.primarySport || 'Cricket';
+  
+  const isMockUser = currentUser?.uid === MOCK_USER_ID;
+  const displayName = userProfile?.fullName || currentUser?.displayName || dbProfile?.fullName || dbProfile?.name || userData?.fullName || userData?.name || (isMockUser ? 'Aarav Sharma' : 'Athlete');
+  const displayAge = (userProfile?.age !== undefined && userProfile?.age !== null)
+    ? String(userProfile.age)
+    : (dbProfile?.age !== undefined && dbProfile?.age !== null
+      ? String(dbProfile.age)
+      : (userData?.dob || userProfile?.dob
+        ? calculateAge(userData?.dob || userProfile?.dob)
+        : (isMockUser ? '17' : '--')));
+  const rawWeight = userProfile?.weight ?? dbProfile?.weight ?? userData?.weight;
+  const displayWeight = (rawWeight !== undefined && rawWeight !== null) ? String(rawWeight) : (isMockUser ? 64 : '--');
+  const rawHeight = userProfile?.height ?? dbProfile?.height ?? userData?.height;
+  const displayHeight = (rawHeight !== undefined && rawHeight !== null) ? String(rawHeight) : (isMockUser ? 172 : '--');
+  const displaySport = userProfile?.primarySport || dbProfile?.primarySport || userData?.primarySport || 'Cricket';
+  const displayEmail = userProfile?.email || currentUser?.email || dbProfile?.email || userData?.email || (isMockUser ? 'aarav.sharma@sportsai.in' : '');
+  const displayBio = userProfile?.bio || dbProfile?.bio || userData?.bio || `Aspiring Athlete | ${displaySport} Focus${displayEmail ? ` | ${displayEmail}` : ''}`;
+  const tierBadge = (isMockUser || dbMetrics?.hasSessions) ? 'Elite Tier' : 'Rookie Athlete';
 
   useEffect(() => {
     async function fetchUserData() {
@@ -32,23 +64,19 @@ export default function AthleteProfileScreen({ navigation }) {
         } catch (error) {
           console.warn("Error fetching user profile data:", error);
         }
+
+        try {
+          const p = await getUserProfileFromDb(currentUser.uid);
+          setDbProfile(p);
+          const m = await getUserProgressMetrics(currentUser.uid);
+          setDbMetrics(m);
+        } catch (err) {
+          console.warn("Error fetching local db profile:", err);
+        }
       }
     }
     fetchUserData();
-  }, [currentUser]);
-
-  const getAge = (dobString) => {
-    if (!dobString) return '18';
-    const today = new Date();
-    const birthDate = new Date(dobString);
-    if (isNaN(birthDate.getTime())) return '18';
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age.toString();
-  };
+  }, [currentUser, userProfile]);
 
   const handleLogout = async () => {
     await logout();
@@ -62,11 +90,13 @@ export default function AthleteProfileScreen({ navigation }) {
           <MaterialIcons name="sports-score" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Sadhaka</Text>
-        <TouchableOpacity>
-          <Image
-            source={{ uri: avatarUri }}
-            style={styles.avatar}
-          />
+        <TouchableOpacity
+          style={styles.headerEditBtn}
+          onPress={() => navigation.navigate('EditProfile')}
+          activeOpacity={0.8}
+          accessibilityLabel="Edit Profile"
+        >
+          <MaterialIcons name="edit" size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -77,27 +107,45 @@ export default function AthleteProfileScreen({ navigation }) {
       >
         {/* Profile Header & Details */}
         <View style={styles.profileSection}>
-          <View style={styles.profileImageContainer}>
+          <TouchableOpacity
+            style={styles.profileImageContainer}
+            onPress={() => navigation.navigate('EditProfile')}
+            activeOpacity={0.8}
+            accessibilityLabel="Edit Profile Photo"
+          >
             <Image
               source={{ uri: avatarUri }}
               style={styles.profileImage}
             />
-          </View>
+            <View style={styles.imageEditBadge}>
+              <MaterialIcons name="photo-camera" size={16} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
           
-          <Text style={styles.profileName}>{userData?.fullName?.split(' ')[0] || userProfile?.fullName?.split(' ')[0] || currentUser?.displayName?.split(' ')[0] || 'Athlete'} 👋</Text>
+          <Text style={styles.profileName}>{displayName} 👋</Text>
           <View style={styles.badgeContainer}>
             <MaterialIcons name="star" size={16} color={colors.primary} />
-            <Text style={styles.badgeText}>Elite Tier</Text>
+            <Text style={styles.badgeText}>{tierBadge}</Text>
           </View>
 
-          <Text style={styles.bioText}>Aspiring Athlete | {displaySport} Focus | Verified Performance Profile</Text>
+          <Text style={styles.bioText}>{displayBio}</Text>
+
+          {/* Edit Profile Action Button */}
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={() => navigation.navigate('EditProfile')}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="edit" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+            <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Stats Grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>AGE</Text>
-            <Text style={styles.statValue}>{getAge(userData?.dob || userProfile?.dob)}</Text>
+            <Text style={styles.statValue}>{displayAge}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>HEIGHT</Text>
@@ -146,24 +194,44 @@ export default function AthleteProfileScreen({ navigation }) {
           </View>
           
           <View style={styles.achievementCard}>
-            <View style={styles.achievementRow}>
-              <View style={styles.achievementLeft}>
-                <View style={styles.achievementIconBox}>
-                  <MaterialIcons name="directions-run" size={20} color={colors.onPrimaryContainer} />
+            {(dbMetrics?.personalBests && dbMetrics.personalBests.length > 0) ? (
+              dbMetrics.personalBests.map((item, idx) => (
+                <View 
+                  key={item.id || idx} 
+                  style={[
+                    styles.achievementRow, 
+                    idx > 0 && { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.outlineVariant }
+                  ]}
+                >
+                  <View style={styles.achievementLeft}>
+                    <View style={styles.achievementIconBox}>
+                      <MaterialIcons name={item.icon || 'directions-run'} size={20} color={colors.primary} />
+                    </View>
+                    <Text style={styles.achievementName}>{item.name}</Text>
+                  </View>
+                  <Text style={styles.achievementScore}>{item.score}</Text>
                 </View>
-                <Text style={styles.achievementName}>100m Sprint</Text>
+              ))
+            ) : (
+              <View style={{ paddingVertical: 14, alignItems: 'center' }}>
+                <Text style={{ color: colors.onSurfaceVariant, fontSize: 13 }}>No personal bests recorded yet</Text>
               </View>
-              <Text style={styles.achievementScore}>11.2s</Text>
-            </View>
+            )}
           </View>
         </View>
 
         {/* Settings List */}
         <View style={styles.settingsCard}>
-          <TouchableOpacity style={styles.settingsRow}>
+          <TouchableOpacity 
+            style={styles.settingsRow}
+            onPress={() => navigation.navigate('EditProfile')}
+            activeOpacity={0.8}
+          >
             <View style={styles.settingsRowLeft}>
-              <MaterialIcons name="person" size={20} color={colors.onSurfaceVariant} />
-              <Text style={styles.settingsText}>Account Settings</Text>
+              <MaterialIcons name="manage-accounts" size={20} color={colors.primary} />
+              <Text style={[styles.settingsText, { color: colors.onSurface, fontWeight: '600' }]}>
+                Edit Profile & Personal Details
+              </Text>
             </View>
             <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
           </TouchableOpacity>
@@ -214,25 +282,8 @@ export default function AthleteProfileScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation Mock */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Main')}>
-          <MaterialIcons name="dashboard" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Dashboard</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChooseSport')}>
-          <MaterialIcons name="fitness-center" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Assessments</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('OverallProgress')}>
-          <MaterialIcons name="analytics" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navItemText}>Insights</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItemActive} onPress={() => navigation.navigate('Profile')}>
-          <MaterialIcons name="person" size={24} color={colors.onPrimaryContainer} />
-          <Text style={styles.navItemTextActive}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Persistent Bottom Navigation */}
+      <BottomNavBar activeTab="Profile" navigation={navigation} />
     </SafeAreaView>
   );
 }
@@ -263,6 +314,11 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: spacing.base,
   },
+  headerEditBtn: {
+    padding: spacing.base,
+    borderRadius: borderRadius.full,
+    backgroundColor: '#EFF6FF',
+  },
   headerTitle: {
     ...typography.brandTitle,
     color: colors.primary,
@@ -286,6 +342,20 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: colors.surfaceContainerHigh,
     marginBottom: spacing.sm,
+    position: 'relative',
+  },
+  imageEditBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: colors.primary,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   profileImage: {
     width: '100%',
@@ -316,6 +386,23 @@ const styles = StyleSheet.create({
     ...typography.bodyMd,
     color: colors.onSurfaceVariant,
     textAlign: 'center',
+  },
+  editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: borderRadius.full,
+    marginTop: spacing.sm,
+  },
+  editProfileButtonText: {
+    ...typography.labelBold,
+    color: colors.primary,
+    fontSize: 13,
   },
   statsGrid: {
     flexDirection: 'row',

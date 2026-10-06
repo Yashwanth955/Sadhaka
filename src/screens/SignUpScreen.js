@@ -32,7 +32,7 @@ export default function SignUpScreen({ navigation }) {
       setError('');
       setLoading(true);
       await signup(email.trim(), password, fullName.trim() || 'Athlete', 'athlete');
-      navigation.navigate('BasicDetails');
+      navigation.replace('BasicDetails');
     } catch (err) {
       setError('Failed to create account: ' + err.message);
     } finally {
@@ -45,7 +45,7 @@ export default function SignUpScreen({ navigation }) {
       setError('');
       setGoogleLoading(true);
       await loginWithGoogle();
-      navigation.navigate('BasicDetails');
+      navigation.replace('BasicDetails');
     } catch (err) {
       setError('Google sign-up error: ' + err.message);
     } finally {

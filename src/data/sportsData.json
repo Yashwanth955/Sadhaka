@@ -13,7 +13,13 @@
       "squats",
       "reactionTest",
       "singleLegBalance",
-      "shoulderMobility"
+      "shoulderMobility",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "football": {
@@ -29,7 +35,13 @@
       "squats",
       "singleLegBalance",
       "reactionTest",
-      "beepTest"
+      "beepTest",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "hockey": {
@@ -45,7 +57,13 @@
       "verticalJump",
       "squats",
       "reactionTest",
-      "beepTest"
+      "beepTest",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "badminton": {
@@ -61,7 +79,13 @@
       "verticalJump",
       "thirtyMeterSprint",
       "singleLegBalance",
-      "shoulderMobility"
+      "shoulderMobility",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "basketball": {
@@ -78,7 +102,13 @@
       "lateralMovement",
       "squats",
       "reactionTest",
-      "beepTest"
+      "beepTest",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "volleyball": {
@@ -95,7 +125,13 @@
       "squats",
       "reactionTest",
       "shoulderMobility",
-      "singleLegBalance"
+      "singleLegBalance",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "wrestling": {
@@ -112,7 +148,13 @@
       "plank",
       "singleLegBalance",
       "flexibilityTest",
-      "reactionTest"
+      "reactionTest",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "boxing": {
@@ -127,7 +169,13 @@
       "pushUps",
       "squats",
       "plank",
-      "verticalJump"
+      "verticalJump",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "kabaddi": {
@@ -144,7 +192,13 @@
       "reactionTest",
       "singleLegBalance",
       "plank",
-      "beepTest"
+      "beepTest",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "kho-kho": {
@@ -161,7 +215,13 @@
       "squats",
       "reactionTest",
       "singleLegBalance",
-      "beepTest"
+      "beepTest",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   },
   "athletics": {
@@ -181,7 +241,13 @@
           "standingLongJump",
           "squats",
           "reactionTest",
-          "flexibilityTest"
+          "flexibilityTest",
+          "heightTest",
+          "weightTest",
+          "medicineBallThrow",
+          "fourByTenShuttle",
+          "sitUps",
+          "endurance1600m"
         ]
       },
       {
@@ -194,7 +260,13 @@
           "squats",
           "plank",
           "singleLegBalance",
-          "flexibilityTest"
+          "flexibilityTest",
+          "heightTest",
+          "weightTest",
+          "medicineBallThrow",
+          "fourByTenShuttle",
+          "sitUps",
+          "endurance1600m"
         ]
       },
       {
@@ -207,7 +279,13 @@
           "verticalJump",
           "squats",
           "flexibilityTest",
-          "singleLegBalance"
+          "singleLegBalance",
+          "heightTest",
+          "weightTest",
+          "medicineBallThrow",
+          "fourByTenShuttle",
+          "sitUps",
+          "endurance1600m"
         ]
       },
       {
@@ -219,7 +297,13 @@
           "pushUps",
           "squats",
           "shoulderMobility",
-          "plank"
+          "plank",
+          "heightTest",
+          "weightTest",
+          "medicineBallThrow",
+          "fourByTenShuttle",
+          "sitUps",
+          "endurance1600m"
         ]
       }
     ],
@@ -235,7 +319,13 @@
       "reactionTest",
       "singleLegBalance",
       "flexibilityTest",
-      "shoulderMobility"
+      "shoulderMobility",
+      "heightTest",
+      "weightTest",
+      "medicineBallThrow",
+      "fourByTenShuttle",
+      "sitUps",
+      "endurance1600m"
     ]
   }
 }
